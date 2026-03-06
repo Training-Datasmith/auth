@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -14,88 +16,81 @@ namespace Auth;
 
 abstract class Auth_Acl_Driver extends \Auth_Driver
 {
-	/**
-	 * @var	Auth_Driver	default instance
-	 */
-	protected static $_instance = null;
+    /**
+     * @var	Auth_Driver	default instance
+     */
+    protected static $_instance;
 
-	/**
-	 * @var	array	contains references if multiple were loaded
-	 */
-	protected static $_instances = array();
+    /**
+     * @var	array	contains references if multiple were loaded
+     */
+    protected static $_instances = [];
 
-	public static function forge(array $config = array())
-	{
-		// default driver id to driver name when not given
-		! array_key_exists('id', $config) && $config['id'] = $config['driver'];
+    public static function forge(array $config = [])
+    {
+        // default driver id to driver name when not given
+        ! array_key_exists('id', $config) && $config['id'] = $config['driver'];
 
-		$class = \Inflector::get_namespace($config['driver']).'Auth_Acl_'.\Str::ucwords(\Inflector::denamespace($config['driver']));
-		$driver = new $class($config);
-		static::$_instances[$driver->get_id()] = $driver;
-		is_null(static::$_instance) and static::$_instance = $driver;
+        $class = \Inflector::get_namespace($config['driver']).'Auth_Acl_'.\Str::ucwords(\Inflector::denamespace($config['driver']));
+        $driver = new $class($config);
+        static::$_instances[$driver->get_id()] = $driver;
+        is_null(static::$_instance) and static::$_instance = $driver;
 
-		foreach ($driver->get_config('drivers', array()) as $type => $drivers)
-		{
-			foreach ($drivers as $d => $custom)
-			{
-				$custom = is_int($d)
-					? array('driver' => $custom)
-					: array_merge($custom, array('driver' => $d));
-				$class = 'Auth_'.\Str::ucwords($type).'_Driver';
-				$class::forge($custom);
-			}
-		}
+        foreach ($driver->get_config('drivers', []) as $type => $drivers) {
+            foreach ($drivers as $d => $custom) {
+                $custom = is_int($d)
+                    ? ['driver' => $custom]
+                    : array_merge($custom, ['driver' => $d]);
+                $class = 'Auth_'.\Str::ucwords($type).'_Driver';
+                $class::forge($custom);
+            }
+        }
 
-		return $driver;
-	}
+        return $driver;
+    }
 
-	/**
-	 * Parses a conditions string into it's array equivalent
-	 *
-	 * @rights	mixed	conditions array or string
-	 * @return	array	conditions array formatted as array(area, rights)
-	 *
-	 */
-	public static function _parse_conditions($rights)
-	{
-		// assime it's already a rights array
-		if (is_array($rights))
-		{
-			return $rights;
-		}
+    /**
+     * Parses a conditions string into it's array equivalent
+     *
+     * @rights	mixed	conditions array or string
+     * @return	array	conditions array formatted as array(area, rights)
+     *
+     */
+    public static function _parse_conditions($rights)
+    {
+        // assime it's already a rights array
+        if (is_array($rights)) {
+            return $rights;
+        }
+        // no clue what this is?
+        if (! is_string($rights)) {
+            throw new \InvalidArgumentException('Given rights where not formatted proppery. Formatting should be like area.right or area.[right, other_right]. Received: '.$rights);
+        }
 
-		// no clue what this is?
-		if ( ! is_string($rights))
-		{
-			throw new \InvalidArgumentException('Given rights where not formatted proppery. Formatting should be like area.right or area.[right, other_right]. Received: '.$rights);
-		}
+        // no clue what this is?
+        if (!str_contains((string) $rights, '.')) {
+            $rights .= '.';
+        }
 
-		// deal with only area passed
-		elseif (strpos($rights, '.') === false)
-		{
-			$rights .= ".";
-		}
+        [$area, $rights] = explode('.', $rights);
 
-		list($area, $rights) = explode('.', $rights);
+        if (str_starts_with($rights, '[') and str_ends_with($rights, ']')) {
+            $rights = preg_split('#( *)?,( *)?#', trim(substr($rights, 1, -1)));
+        }
 
-		if (substr($rights, 0, 1) == '[' and substr($rights, -1, 1) == ']')
-		{
-			$rights = preg_split('#( *)?,( *)?#', trim(substr($rights, 1, -1)));
-		}
+        return [$area, $rights];
+    }
 
-		return array($area, $rights);
-	}
+    // ------------------------------------------------------------------------
 
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Check access rights
-	 *
-	 * @param	mixed	condition to check for access
-	 * @param	mixed	user or group identifier in the form of array(driver_id, id)
-	 * @return	bool
-	 */
-	abstract public function has_access($condition, Array $entity);
+    /**
+     * Check access rights
+     *
+     * @param	mixed	condition to check for access
+     * @param	mixed	user or group identifier in the form of array(driver_id, id)
+     * @return	bool
+     */
+    abstract public function has_access($condition, array $entity);
 }
 
 /* end of file driver.php */

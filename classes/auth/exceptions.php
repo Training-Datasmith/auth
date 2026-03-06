@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -12,8 +14,14 @@
 
 namespace Auth;
 
-class SimpleUserUpdateException extends \FuelException {}
+class SimpleUserUpdateException extends \FuelException
+{
+}
 
-class SimpleUserWrongPassword extends \FuelException {}
+class SimpleUserWrongPassword extends \FuelException
+{
+}
 
-class OpauthException extends \FuelException {}
+class OpauthException extends \FuelException
+{
+}

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -10,14 +12,14 @@
  * @link       https://fuelphp.com
  */
 
-return array(
+return [
     'name'   => 'Role name',
     'filter' => 'Special permissions',
 
-    'permissions' => array(
+    'permissions' => [
         ''  => 'None',
         'A' => 'Allow all access',
         'D' => 'Deny all access',
         'R' => 'Revoke assigned permissions',
-	),
-);
+    ],
+];

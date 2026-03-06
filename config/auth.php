@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -19,9 +21,9 @@
  * This will allow you to upgrade fuel without losing your custom config.
  */
 
-return array(
+return [
     'driver'                 => 'Simpleauth',
     'verify_multiple_logins' => false,
     'salt'                   => 'put_your_salt_here',
     'iterations'             => 10000,
-);
+];

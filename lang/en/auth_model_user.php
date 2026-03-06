@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -10,9 +12,9 @@
  * @link       https://fuelphp.com
  */
 
-return array(
+return [
     'name'     => 'User name',
     'email'    => 'Email address',
     'password' => 'Password',
     'group_id' => 'Group',
-);
+];
