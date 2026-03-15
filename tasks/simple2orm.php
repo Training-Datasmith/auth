@@ -238,21 +238,21 @@ HELP;
             }
 
             // fetch the role as an ORM object, and assign the defined permissions to it
-            $role = \Model\Auth_Role::find($role_id);
-            if ($role) {
+            $role_model = \Model\Auth_Role::find($role_id);
+            if ($role_model) {
                 foreach ($config as $area => $permissions) {
                     foreach ($permissions as $permission) {
                         $perm = \Model\Auth_Permission::query()->where('area', '=', $area)->where('permission', '=', $permission)->get_one();
                         if (! $perm) {
                             \Cli::write('- creating permission: '.$area.'.'.$permission, 'light_green');
-                            $perm = \Model\Auth_Permission::forge(['area' => $area, 'permission' => $permission, 'description' => $area.'.'.$permission, 'actions' => serialize([])]);
+                            $perm = \Model\Auth_Permission::forge(['area' => $area, 'permission' => $permission, 'description' => $area.'.'.$permission, 'actions' => []]);
                         }
-                        $role->permissions[] = $perm;
+                        $role_model->permissions[] = $perm;
                     }
                 }
 
                 // update the role and save the permissions
-                $role->save();
+                $role_model->save();
             }
         }
 

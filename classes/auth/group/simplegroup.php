@@ -74,7 +74,7 @@ class Auth_Group_Simplegroup extends \Auth_Group_Driver
         }
 
         $groups = \Config::get('simpleauth.groups');
-        return $groups[(int) $group]['roles'];
+        return $groups[(int) $group]['roles'] ?? [];
     }
 }
 

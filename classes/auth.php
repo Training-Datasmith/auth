@@ -137,7 +137,7 @@ class Auth
             static::$_instance = null;
             return true;
         }
-        if (array_key_exists($driver_id, static::$_instances)) {
+        if (! array_key_exists($driver_id, static::$_instances)) {
             return false;
         }
 
@@ -350,7 +350,7 @@ class Auth
             return static::_driver_instance($method, $args[0]);
         }
         if ($type = array_search($method, static::$_drivers)) {
-            return static::_driver_check($type, $args[0], $args[1], @$args[2]);
+            return static::_driver_check($type, $args[0], $args[1], $args[2]);
         }
         if (static::$_verify_multiple !== true and method_exists(static::$_instance, $method)) {
             return call_fuel_func_array([static::$_instance, $method], $args);
@@ -410,12 +410,10 @@ class Auth
             return false;
         }
         if ($entity === null) {
-            foreach (static::$_verified as $v) {
-                if (static::$type($driver)->$method($condition)) {
-                    return true;
-                }
+            if (static::_driver_instance($type, $driver)->$method($condition)) {
+                return true;
             }
-        } elseif (static::$type($driver)->$method($condition, $entity)) {
+        } elseif (static::_driver_instance($type, $driver)->$method($condition, $entity)) {
             return true;
         }
         return false;

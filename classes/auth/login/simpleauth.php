@@ -80,7 +80,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 
         // only worth checking if there's both a username and login-hash
         if (! empty($username) and ! empty($login_hash)) {
-            if (is_null($this->user) or ($this->user['username'] != $username and $this->user != static::$guest_login)) {
+            if (is_null($this->user) or ($this->user['username'] !== $username and $this->user !== static::$guest_login)) {
                 $this->user = \DB::select_array(\Config::get('simpleauth.table_columns', ['*']))
                     ->where('username', '=', $username)
                     ->from(\Config::get('simpleauth.table_name'))
@@ -88,7 +88,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
             }
 
             // return true when login was verified, and either the hash matches or multiple logins are allowed
-            if ($this->user and (\Config::get('simpleauth.multiple_logins', false) or $this->user['login_hash'] === $login_hash)) {
+            if ($this->user and (\Config::get('simpleauth.multiple_logins', false) or hash_equals((string) $this->user['login_hash'], (string) $login_hash))) {
                 return true;
             }
         }
@@ -178,7 +178,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
             ->execute(\Config::get('simpleauth.db_connection'))
             ->current();
 
-        if ($this->user == false) {
+        if ($this->user === false) {
             $this->user = \Config::get('simpleauth.guest_login', true) ? static::$guest_login : false;
             \Session::delete('username');
             \Session::delete('login_hash');
@@ -236,7 +236,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
             ->execute(\Config::get('simpleauth.db_connection'));
 
         if ($same_users->count() > 0) {
-            if (in_array(strtolower($email), array_map(strtolower(...), $same_users->current()))) {
+            if (strtolower($email) === strtolower($same_users->current()['email'])) {
                 throw new \SimpleUserUpdateException('Email address already exists', 2);
             }
             throw new \SimpleUserUpdateException('Username already exists', 3);
@@ -285,7 +285,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
         }
         if (array_key_exists('password', $values)) {
             if (empty($values['old_password'])
-                or $current_values->get('password') != $this->hash_password(trim((string) $values['old_password']))) {
+                or ! hash_equals($current_values->get('password'), $this->hash_password(trim((string) $values['old_password'])))) {
                 throw new \SimpleUserWrongPassword('Old password is invalid');
             }
 
@@ -322,7 +322,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
             unset($values['group']);
         }
         if (! empty($values)) {
-            $profile_fields = @unserialize($current_values->get('profile_fields')) ?: [];
+            $profile_fields = unserialize($current_values->get('profile_fields'), ['allowed_classes' => false]) ?: [];
             foreach ($values as $key => $val) {
                 if ($val === null) {
                     unset($profile_fields[$key]);
@@ -379,7 +379,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
      */
     public function reset_password($username)
     {
-        $new_password = \Str::random('alnum', 8);
+        $new_password = bin2hex(random_bytes(16));
         $password_hash = $this->hash_password($new_password);
 
         $affected_rows = \DB::update(\Config::get('simpleauth.table_name'))
@@ -478,7 +478,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
         if (isset($this->user[$field])) {
             return $this->user[$field];
         }
-        if (isset($this->user['profile_fields'])) {
+        if (array_key_exists('profile_fields', $this->user)) {
             return $this->get_profile_fields($field, $default);
         }
 
@@ -520,8 +520,8 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
             return false;
         }
 
-        if (isset($this->user['profile_fields'])) {
-            is_array($this->user['profile_fields']) or $this->user['profile_fields'] = (@unserialize($this->user['profile_fields']) ?: []);
+        if (array_key_exists('profile_fields', $this->user)) {
+            is_array($this->user['profile_fields']) or $this->user['profile_fields'] = (unserialize($this->user['profile_fields'], ['allowed_classes' => false]) ?: []);
         } else {
             $this->user['profile_fields'] = [];
         }

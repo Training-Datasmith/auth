@@ -305,7 +305,7 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         }
         if (array_key_exists('password', $values)) {
             if (empty($values['old_password'])
-                or $current_values->password != $this->hash_password(trim((string) $values['old_password']))) {
+                or ! hash_equals($current_values->password, $this->hash_password(trim((string) $values['old_password'])))) {
                 throw new \SimpleUserWrongPassword('Old password is invalid');
             }
 
@@ -419,7 +419,7 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         }
 
         // generate a new random password
-        $new_password = \Str::random('alnum', 8);
+        $new_password = bin2hex(random_bytes(16));
         $user->password = $this->hash_password($new_password);
 
         // store the updated password hash
@@ -614,7 +614,7 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         // only worth checking if there's both a username and login-hash
         if (! empty($username) and ! empty($login_hash)) {
             // if we don't have a user, or we're logging in from guest mode
-            if (is_null($this->user) or ($this->user->username != $username and $this->user->id == 0)) {
+            if (is_null($this->user) or ($this->user->username !== $username and $this->user->id === 0)) {
                 // find the user
                 $this->user = \Model\Auth_User::query()
                     ->select(\Config::get('ormauth.table_columns', []))
@@ -624,7 +624,7 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
             }
 
             // return true when login was verified, and either the hash matches or multiple logins are allowed
-            if ($this->user and (\Config::get('ormauth.multiple_logins', false) or $this->user['login_hash'] === $login_hash)) {
+            if ($this->user and (\Config::get('ormauth.multiple_logins', false) or hash_equals((string) $this->user['login_hash'], (string) $login_hash))) {
                 return true;
             }
         }
