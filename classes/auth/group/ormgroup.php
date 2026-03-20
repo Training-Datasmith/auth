@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @copyright  2010 - 2019 Fuel Development Team
  * @link       https://fuelphp.com
  */
-
 namespace Auth;
 
 /**
@@ -26,7 +25,6 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
      * @var  array  list of valid groups
      */
     protected static $_valid_groups = [];
-
     /*
      * class init
      */
@@ -34,20 +32,16 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
     {
         // get the list of valid groups
         try {
-            static::$_valid_groups = \Cache::get(\Config::get('ormauth.cache_prefix', 'auth').'.groups');
-        } catch (\CacheNotFoundException) {
+            static::$_valid_groups = \Cache::get(\Config::get('ormauth.cache_prefix', 'auth') . '.groups');
+        } catch (\Cache_Not_Found_Exception) {
             static::$_valid_groups = \Model\Auth_Group::find('all');
-            \Cache::set(\Config::get('ormauth.cache_prefix', 'auth').'.groups', static::$_valid_groups);
+            \Cache::set(\Config::get('ormauth.cache_prefix', 'auth') . '.groups', static::$_valid_groups);
         }
     }
-
     /*
      * additional drivers to load
      */
-    protected $config = [
-        'drivers' => ['acl' => ['Ormacl']],
-    ];
-
+    protected $config = ['drivers' => ['acl' => ['Ormacl']]];
     /*
      * Return the list of defined groups
      */
@@ -55,17 +49,15 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
     {
         return static::$_valid_groups;
     }
-
     /*
      * check for group membership
      */
     public function member($group_id, $user = null)
     {
         // if it's not a group id, fetch it from the object
-        if (! is_numeric($group_id)) {
+        if (!is_numeric($group_id)) {
             $group_id = $group_id->id;
         }
-
         // do we know this group?
         if (isset(static::$_valid_groups[$group_id])) {
             // if no user is given
@@ -76,12 +68,10 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
                 // get the groups if the given user instance
                 $groups = \Auth::instance($user[0])->get_groups();
             }
-
             // if no group info could be retrieved, the user can't be a member
-            if (! $groups) {
+            if (!$groups) {
                 return false;
             }
-
             // check for membership
             foreach ($groups as $group) {
                 if ($group[0] === $this->id and (int) $group_id === (int) $group[1]->id) {
@@ -89,10 +79,8 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
                 }
             }
         }
-
         return false;
     }
-
     /*
      * get the name of a specific group, or of the users default group
      */
@@ -101,17 +89,13 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
         // if no group is given
         if ($group === null) {
             // try get the the group assigned to the logged-in user
-            if (! $login = \Auth::instance() or ! is_array($groups = $login->get_groups())) {
+            if (!$login = \Auth::instance() or !is_array($groups = $login->get_groups())) {
                 return false;
             }
             $group = $groups[0][1] ?? null;
-        }
-
-        // if it's a group id, find the corresponding object
-        elseif (is_numeric($group) and isset(static::$_valid_groups[$group])) {
+        } elseif (is_numeric($group) and isset(static::$_valid_groups[$group])) {
             $group = static::$_valid_groups[$group];
         }
-
         // if the group was found, return the name
         if ($group instanceof Model\Auth_Group) {
             return $group->name;
@@ -119,7 +103,6 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
         // no group found, so no name either
         return null;
     }
-
     /*
      * get the roles assigned to a group, or to the users default group
      */
@@ -127,18 +110,12 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
     {
         // When group is empty, attempt to get groups from a current login
         if ($group === null) {
-            if ($login = \Auth::instance()
-                and is_array($groups = $login->get_groups())
-                and isset($groups[0][1])) {
+            if ($login = \Auth::instance() and is_array($groups = $login->get_groups()) and isset($groups[0][1])) {
                 $group = $groups[0][1];
             }
-        }
-
-        // if it's a group id, find the corresponding object
-        elseif (is_numeric($group) and isset(static::$_valid_groups[$group])) {
+        } elseif (is_numeric($group) and isset(static::$_valid_groups[$group])) {
             $group = static::$_valid_groups[$group];
         }
-
         // if the group was found, return the roles
         if ($group instanceof Model\Auth_Group) {
             return $group->roles;

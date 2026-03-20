@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @copyright  2010 - 2019 Fuel Development Team
  * @link       https://fuelphp.com
  */
-
 namespace Auth;
 
 /**
@@ -29,44 +28,27 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // load the auth config
         \Config::load('ormauth', true);
-
         // deal with invalid column selections
-        if (($columns = \Config::get('ormauth.table_columns', [])) == ['*'] or ! is_array($columns)) {
+        if (($columns = \Config::get('ormauth.table_columns', [])) == ['*'] or !is_array($columns)) {
             \Config::set('ormauth.table_columns', []);
         }
-
         // setup the remember-me session object if needed
         if (\Config::get('ormauth.remember_me.enabled', false)) {
-            static::$remember_me = \Session::forge([
-                'driver' => 'cookie',
-                'cookie' => [
-                    'cookie_name' => \Config::get('ormauth.remember_me.cookie_name', 'rmcookie'),
-                ],
-                'encrypt_cookie' => true,
-                'expire_on_close' => false,
-                'expiration_time' => \Config::get('ormauth.remember_me.expiration', 86400 * 31),
-            ]);
+            static::$remember_me = \Session::forge(['driver' => 'cookie', 'cookie' => ['cookie_name' => \Config::get('ormauth.remember_me.cookie_name', 'rmcookie')], 'encrypt_cookie' => true, 'expire_on_close' => false, 'expiration_time' => \Config::get('ormauth.remember_me.expiration', 86400 * 31)]);
         }
     }
-
     /**
      * @var  \Model\Auth_User  user object for the current user
      */
     protected $user;
-
     /**
      * @var  array  Simpleauth compatible permissions array for the current logged-in user
      */
     protected $permissions = [];
-
     /**
      * @var  array  Ormauth class config
      */
-    protected $config = [
-        'drivers' => ['group' => ['Ormgroup']],
-        'additional_fields' => [],
-    ];
-
+    protected $config = ['drivers' => ['group' => ['Ormgroup']], 'additional_fields' => []];
     /**
      * Check the user exists
      *
@@ -77,30 +59,17 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         // get the user identification and password
         $username_or_email = trim((string) $username_or_email) ?: trim(\Input::post(\Config::get('ormauth.username_post_key', 'username')));
         $password = trim((string) $password) ?: trim(\Input::post(\Config::get('ormauth.password_post_key', 'password')));
-
         // and make sure we have both
         if (empty($username_or_email) or empty($password)) {
             return false;
         }
-
         // hash the password
         $password = $this->hash_password($password);
-
         // and do a lookup of this user
-        $user = \Model\Auth_User::query()
-            ->select(\Config::get('ormauth.table_columns', []))
-            ->related('metadata')
-            ->where_open()
-                ->where('username', '=', $username_or_email)
-                ->or_where('email', '=', $username_or_email)
-            ->where_close()
-            ->where('password', '=', $password)
-            ->get_one();
-
+        $user = \Model\Auth_User::query()->select(\Config::get('ormauth.table_columns', []))->related('metadata')->where_open()->where('username', '=', $username_or_email)->or_where('email', '=', $username_or_email)->where_close()->where('password', '=', $password)->get_one();
         // return the user object, or false if not found
         return $user ?: false;
     }
-
     /**
      * Login user
      *
@@ -110,27 +79,21 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
      */
     public function login($username_or_email = '', $password = '')
     {
-        if (! ($this->user = $this->validate_user($username_or_email, $password))) {
+        if (!$this->user = $this->validate_user($username_or_email, $password)) {
             // force a logout
             $this->logout();
-
             // and signal a failed login
             return false;
         }
-
         // register so Auth::logout() can find us
         Auth::_register_verified($this);
-
         // store the logged-in user and it's hash in the session
         \Session::set('username', $this->user->username);
         \Session::set('login_hash', $this->create_login_hash());
-
         // and rotate the session id, we've elevated rights
         \Session::instance()->rotate();
-
         return true;
     }
-
     /**
      * Force login user
      *
@@ -143,40 +106,28 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         if (empty($user_id)) {
             return false;
         }
-
         // get the user we need to login
-        if (! $user_id instanceof \Model\Auth_User) {
-            $this->user = \Model\Auth_User::query()
-                ->select(\Config::get('ormauth.table_columns', []))
-                ->related('metadata')
-                ->where('id', '=', $user_id)
-                ->get_one();
+        if (!$user_id instanceof \Model\Auth_User) {
+            $this->user = \Model\Auth_User::query()->select(\Config::get('ormauth.table_columns', []))->related('metadata')->where('id', '=', $user_id)->get_one();
         } else {
             $this->user = $user_id;
         }
-
         // did we find it
-        if ($this->user and ! $this->user->is_new()) {
+        if ($this->user and !$this->user->is_new()) {
             // store the logged-in user and it's hash in the session
             \Session::set('username', $this->user->username);
             \Session::set('login_hash', $this->create_login_hash());
-
             // and rotate the session id, we've elevated rights
             \Session::instance()->rotate();
-
             // register so Auth::logout() can find us
             Auth::_register_verified($this);
-
             return true;
         }
-
         // force a logout
         $this->logout();
-
         // and signal a failed login
         return false;
     }
-
     /**
      * Logout user
      *
@@ -186,22 +137,15 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // reset the current user
         if (\Config::get('ormauth.guest_login', true)) {
-            $this->user = \Model\Auth_User::query()
-                ->select(\Config::get('ormauth.table_columns', []))
-                ->related('metadata')
-                ->where('id', '=', 0)
-                ->get_one();
+            $this->user = \Model\Auth_User::query()->select(\Config::get('ormauth.table_columns', []))->related('metadata')->where('id', '=', 0)->get_one();
         } else {
             $this->user = false;
         }
-
         // delete the session data identifying this user
         \Session::delete('username');
         \Session::delete('login_hash');
-
         return true;
     }
-
     /**
      * Create new user
      *
@@ -216,65 +160,41 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // prep the password
         $password = trim((string) $password);
-
         // and validate the email address
         $email = filter_var(trim((string) $email), FILTER_VALIDATE_EMAIL);
-
         // bail out if we're missing username, password or email address
         if (empty($username) or empty($password) or empty($email)) {
-            throw new \SimpleUserUpdateException('Username, password or email address is not given, or email address is invalid', 1);
+            throw new \Simple_User_Update_Exception('Username, password or email address is not given, or email address is invalid', 1);
         }
-
         // check if we already have an account with this email address or username
-        $duplicate = \Model\Auth_User::query()
-            ->where('username', '=', $username)
-            ->or_where('email', '=', $email)
-            ->get_one();
-
+        $duplicate = \Model\Auth_User::query()->where('username', '=', $username)->or_where('email', '=', $email)->get_one();
         // did we find one?
         if ($duplicate) {
             // bail out with an exception
             if (strtolower($email) == strtolower((string) $duplicate->email)) {
-                throw new \SimpleUserUpdateException('Email address already exists', 2);
+                throw new \Simple_User_Update_Exception('Email address already exists', 2);
             }
-            throw new \SimpleUserUpdateException('Username already exists', 3);
+            throw new \Simple_User_Update_Exception('Username already exists', 3);
         }
-
         // do we have a logged-in user?
         if ($currentuser = \Auth::get_user_id()) {
             $currentuser = $currentuser[1];
         } else {
             $currentuser = 0;
         }
-
         // create the new user record
-        $user = \Model\Auth_User::forge([
-            'username'        => (string) $username,
-            'password'        => $this->hash_password($password),
-            'email'           => $email,
-            'group_id'        => (int) $group,
-            'last_login'      => 0,
-            'previous_login'  => 0,
-            'login_hash'      => '',
-            'user_id'         => $currentuser,
-            'created_at'	  => \Date::forge()->get_timestamp(),
-            'updated_at'      => 0,
-        ]);
-
+        $user = \Model\Auth_User::forge(['username' => (string) $username, 'password' => $this->hash_password($password), 'email' => $email, 'group_id' => (int) $group, 'last_login' => 0, 'previous_login' => 0, 'login_hash' => '', 'user_id' => $currentuser, 'created_at' => \Date::forge()->get_timestamp(), 'updated_at' => 0]);
         // load all additional data, passed as profile fields
         $user->from_array($profile_fields);
-
         // save the new user record
         try {
             $result = $user->save();
         } catch (\Exception) {
             $result = false;
         }
-
         // and the id of the created user, or false if creation failed
         return $result ? $user->id : false;
     }
-
     /**
      * Update a user's properties
      * Note: Username cannot be updated, to update password the old password must be passed as old_password
@@ -287,31 +207,24 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // if no username is given, fetch the current user's namd
         $username = $username ?: $this->user->username;
-
         // get the current user record
-        $current_values = \Model\Auth_User::query()
-            ->where('username', '=', $username)
-            ->get_one();
-
+        $current_values = \Model\Auth_User::query()->where('username', '=', $username)->get_one();
         // and bail out if it doesn't exist
         if (empty($current_values)) {
-            throw new \SimpleUserUpdateException('Username not found', 4);
+            throw new \Simple_User_Update_Exception('Username not found', 4);
         }
-
         // validate the values passed and assume the update array
         $update = [];
         if (array_key_exists('username', $values)) {
-            throw new \SimpleUserUpdateException('Username cannot be changed.', 5);
+            throw new \Simple_User_Update_Exception('Username cannot be changed.', 5);
         }
         if (array_key_exists('password', $values)) {
-            if (empty($values['old_password'])
-                or ! hash_equals($current_values->password, $this->hash_password(trim((string) $values['old_password'])))) {
-                throw new \SimpleUserWrongPassword('Old password is invalid');
+            if (empty($values['old_password']) or !hash_equals($current_values->password, $this->hash_password(trim((string) $values['old_password'])))) {
+                throw new \Simple_User_Wrong_Password('Old password is invalid');
             }
-
             $password = trim(strval($values['password']));
             if ($password === '') {
-                throw new \SimpleUserUpdateException('Password can\'t be empty.', 6);
+                throw new \Simple_User_Update_Exception('Password can\'t be empty.', 6);
             }
             $update['password'] = $this->hash_password($password);
             unset($values['password']);
@@ -321,19 +234,13 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         }
         if (array_key_exists('email', $values)) {
             $email = filter_var(trim((string) $values['email']), FILTER_VALIDATE_EMAIL);
-            if (! $email) {
-                throw new \SimpleUserUpdateException('Email address is not valid', 7);
+            if (!$email) {
+                throw new \Simple_User_Update_Exception('Email address is not valid', 7);
             }
-
-            $matches = \Model\Auth_User::query()
-                ->where('email', '=', $email)
-                ->where('id', '!=', $current_values->id)
-                ->get_one();
-
+            $matches = \Model\Auth_User::query()->where('email', '=', $email)->where('id', '!=', $current_values->id)->get_one();
             if ($matches) {
-                throw new \SimpleUserUpdateException('Email address is already in use', 11);
+                throw new \Simple_User_Update_Exception('Email address is already in use', 11);
             }
-
             $update['email'] = $email;
             unset($values['email']);
         }
@@ -348,37 +255,30 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
             }
             unset($values['group_id']);
         }
-
         // load the updated values into the object
         $current_values->from_array($update);
-
         $updated = false;
-
         // any values remaining?
         // set them as EAV values
         foreach ($values as $key => $value) {
-            if (! isset($current_values->{$key}) or $current_values->{$key} != $value) {
+            if (!isset($current_values->{$key}) or $current_values->{$key} != $value) {
                 if ($value === null) {
                     unset($current_values->{$key});
                 } else {
                     $current_values->{$key} = $value;
                 }
-
                 // mark we've updated something
                 $updated = true;
             }
         }
-
         // check if this has changed anything
         if ($updated or $updated = $current_values->is_changed()) {
             // and only save if it did
             $current_values->save();
         }
-
         // return the updated status
         return $updated;
     }
-
     /**
      * Change a user's password
      *
@@ -392,13 +292,10 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         // use the update_user method to change the password
         try {
             return (bool) $this->update_user(['old_password' => $old_password, 'password' => $new_password], $username);
-        }
-        // only catch the wrong password exception
-        catch (SimpleUserWrongPassword) {
+        } catch (Simple_User_Wrong_Password) {
             return false;
         }
     }
-
     /**
      * Generates new random password, sets it for the given username and returns the new password.
      * To be used for resetting a user's forgotten password, should be emailed afterwards.
@@ -409,26 +306,19 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     public function reset_password($username)
     {
         // get the user object
-        $user = \Model\Auth_User::query()
-            ->where('username', '=', $username)
-            ->get_one();
-
+        $user = \Model\Auth_User::query()->where('username', '=', $username)->get_one();
         // and bail out if not found
-        if (! $user) {
-            throw new \SimpleUserUpdateException('Failed to reset password, user was invalid.', 8);
+        if (!$user) {
+            throw new \Simple_User_Update_Exception('Failed to reset password, user was invalid.', 8);
         }
-
         // generate a new random password
         $new_password = bin2hex(random_bytes(16));
         $user->password = $this->hash_password($new_password);
-
         // store the updated password hash
         $user->save();
-
         // and return the new password
         return $new_password;
     }
-
     /**
      * Deletes a given user
      *
@@ -439,23 +329,16 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // make sure we have a user to delete
         if (empty($username)) {
-            throw new \SimpleUserUpdateException('Cannot delete user with empty username', 9);
+            throw new \Simple_User_Update_Exception('Cannot delete user with empty username', 9);
         }
-
         // get the user object
-        $user = \Model\Auth_User::query()
-            ->related('metadata')
-            ->related('providers')
-            ->where('username', '=', $username)
-            ->get_one();
-
+        $user = \Model\Auth_User::query()->related('metadata')->related('providers')->where('username', '=', $username)->get_one();
         // if it was found, delete it
         if ($user) {
             return (bool) $user->delete();
         }
         return false;
     }
-
     /**
      * Creates a temporary hash that will validate the current login
      *
@@ -465,23 +348,18 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // we need a logged-in user to generate a login hash
         if (empty($this->user)) {
-            throw new \SimpleUserUpdateException('User not logged in, can\'t create login hash.', 10);
+            throw new \Simple_User_Update_Exception('User not logged in, can\'t create login hash.', 10);
         }
-
         // set the previous and current last login
         $this->user->previous_login = $this->user->last_login;
         $this->user->last_login = \Date::forge()->get_timestamp();
-
         // generate the new hash
-        $this->user->login_hash = sha1(\Config::get('ormauth.login_hash_salt').$this->user->username.$this->user->last_login);
-
+        $this->user->login_hash = sha1(\Config::get('ormauth.login_hash_salt') . $this->user->username . $this->user->last_login);
         // store it
         $this->user->save();
-
         // and return it
         return $this->user->login_hash;
     }
-
     /**
      * Get the user object
      *
@@ -491,7 +369,6 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         return empty($this->user) ? false : $this->user;
     }
-
     /**
      * Get the user's ID
      *
@@ -503,10 +380,8 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         if (empty($this->user)) {
             return false;
         }
-
         return [$this->id, (int) $this->user->id];
     }
-
     /**
      * Get the user's groups
      *
@@ -518,10 +393,8 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         if (empty($this->user)) {
             return false;
         }
-
         return [['Ormgroup', $this->user->group]];
     }
-
     /**
      * Getter for user data.
      *
@@ -535,7 +408,6 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
         // if it's an object property, return it, else return the default
         return $this->user->{$field} ?? $default;
     }
-
     /**
      * Get the user's emailaddress
      *
@@ -545,7 +417,6 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         return $this->get('email', false);
     }
-
     /**
      * Get the user's screen name
      *
@@ -555,7 +426,6 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         return $this->get('username', false);
     }
-
     /**
      * for compatibility, will map to the user metadata
      *
@@ -565,7 +435,6 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         // collect all meta data
         $profile_fields = [];
-
         foreach ($this->user->metadata as $metadata) {
             if (empty($field)) {
                 $profile_fields[$metadata->key] = $metadata->value;
@@ -573,25 +442,22 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
                 return $metadata->value;
             }
         }
-
         // return the connected data
         return empty($profile_fields) ? $default : $profile_fields;
     }
-
     /**
      * Extension of base driver method to default to user group instead of user id
      */
     public function has_access($condition, $driver = null, $user = null)
     {
         if (is_null($user)) {
-            if (! is_array($groups = $this->get_groups())) {
+            if (!is_array($groups = $this->get_groups())) {
                 return false;
             }
             $user = reset($groups);
         }
         return parent::has_access($condition, $driver, $user);
     }
-
     /**
      * Extension of base driver because this supports a guest login when switched on
      */
@@ -599,7 +465,6 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     {
         return \Config::get('ormauth.guest_login', true);
     }
-
     /**
      * Check for login
      *
@@ -608,35 +473,24 @@ class Auth_Login_Ormauth extends \Auth_Login_Driver
     protected function perform_check()
     {
         // get the username and login hash from the session
-        $username    = \Session::get('username');
-        $login_hash  = \Session::get('login_hash');
-
+        $username = \Session::get('username');
+        $login_hash = \Session::get('login_hash');
         // only worth checking if there's both a username and login-hash
-        if (! empty($username) and ! empty($login_hash)) {
+        if (!empty($username) and !empty($login_hash)) {
             // if we don't have a user, or we're logging in from guest mode
-            if (is_null($this->user) or ($this->user->username !== $username and $this->user->id === 0)) {
+            if (is_null($this->user) or $this->user->username !== $username and $this->user->id === 0) {
                 // find the user
-                $this->user = \Model\Auth_User::query()
-                    ->select(\Config::get('ormauth.table_columns', []))
-                    ->related('metadata')
-                    ->where('username', '=', $username)
-                    ->get_one();
+                $this->user = \Model\Auth_User::query()->select(\Config::get('ormauth.table_columns', []))->related('metadata')->where('username', '=', $username)->get_one();
             }
-
             // return true when login was verified, and either the hash matches or multiple logins are allowed
             if ($this->user and (\Config::get('ormauth.multiple_logins', false) or hash_equals((string) $this->user['login_hash'], (string) $login_hash))) {
                 return true;
             }
-        }
-
-        // not logged in, do we have remember-me active and a stored user_id?
-        elseif (static::$remember_me and $user_id = static::$remember_me->get('user_id', null)) {
+        } elseif (static::$remember_me and $user_id = static::$remember_me->get('user_id', null)) {
             return $this->force_login($user_id);
         }
-
         // force a logout
         $this->logout();
-
         return false;
     }
 }

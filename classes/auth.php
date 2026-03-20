@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -11,13 +11,11 @@ declare(strict_types=1);
  * @copyright  2010 - 2019 Fuel Development Team
  * @link       https://fuelphp.com
  */
-
 namespace Auth;
 
-class AuthException extends \FuelException
+class Auth_Exception extends \Fuel_Exception
 {
 }
-
 /**
  * Auth
  *
@@ -30,48 +28,35 @@ class Auth
      * @var  Auth_Login_Driver	default instance
      */
     protected static $_instance;
-
     /**
      * @var  Array  contains references if multiple were loaded
      */
     protected static $_instances = [];
-
     /**
      * @var  Array  Login drivers that verified a current login
      */
     protected static $_verified = [];
-
     /**
      * @var  bool  Whether to verify multiple
      */
     protected static $_verify_multiple = false;
-
     /**
      * @var  Array  subdriver registry, takes driver name and method for checking it
      */
-    protected static $_drivers = [
-        'group'  => 'member',
-        'acl'    => 'has_access',
-    ];
-
+    protected static $_drivers = ['group' => 'member', 'acl' => 'has_access'];
     public static function _init(): void
     {
         \Config::load('auth', true);
-
         foreach ((array) \Config::get('auth.driver', []) as $driver => $config) {
-            $config = is_int($driver)
-                ? ['driver' => $config]
-                : array_merge($config, ['driver' => $driver]);
+            $config = is_int($driver) ? ['driver' => $config] : array_merge($config, ['driver' => $driver]);
             static::forge($config);
         }
-
         // Set the first (or only) as the default instance for static usage
-        if (! empty(static::$_instances)) {
+        if (!empty(static::$_instances)) {
             static::$_instance = reset(static::$_instances);
             static::check();
         }
     }
-
     /**
      * Load a login driver to the array of loaded drivers
      *
@@ -81,49 +66,41 @@ class Auth
     public static function forge($custom = [])
     {
         // Driver is given as array key or just string in custom
-        $custom = ! is_array($custom) ? ['driver' => $custom] : $custom;
-        $config = \Config::get('auth.'.$custom['driver'].'_config', []);
+        $custom = !is_array($custom) ? ['driver' => $custom] : $custom;
+        $config = \Config::get('auth.' . $custom['driver'] . '_config', []);
         $config = array_merge($config, $custom);
-
         // Driver must be set
-        if (empty($config['driver']) || ! is_string($config['driver'])) {
-            throw new \AuthException('No auth driver given.');
+        if (empty($config['driver']) || !is_string($config['driver'])) {
+            throw new \Auth_Exception('No auth driver given.');
         }
-
         // determine the driver to load
         $driver = \Auth_Login_Driver::forge($config);
-
         // get the driver's cookie name
         $id = $driver->get_id();
-
         // do we already have a driver instance for this cookie?
         if (isset(static::$_instances[$id])) {
             // if so, they must be using the same driver class!
             $class = $driver::class;
-            if (! static::$_instances[$id] instanceof $class) {
-                throw new \AuthException('You can not instantiate two different login drivers using the same id "'.$id.'"');
+            if (!static::$_instances[$id] instanceof $class) {
+                throw new \Auth_Exception('You can not instantiate two different login drivers using the same id "' . $id . '"');
             }
         } else {
             // store this instance
             static::$_instances[$id] = $driver;
         }
-
         // If we have more then one driver instance, check if we need concurrency
         if (count(static::$_instances) > 1) {
             // Whether to allow multiple drivers of any type, defaults to not allowed
             static::$_verify_multiple = \Config::get('auth.verify_multiple_logins', false);
         }
-
         return static::$_instances[$id];
     }
-
     /**
      * Prevent instantiation
      */
     final private function __construct()
     {
     }
-
     /**
      * Remove individual driver, or all drivers of $type
      *
@@ -132,19 +109,17 @@ class Auth
      */
     public static function unload($driver_id = null): bool
     {
-        if ($driver_id === null && ! empty(static::$_instance)) {
+        if ($driver_id === null && !empty(static::$_instance)) {
             unset(static::$_instances[static::$_instance->get_id()]);
             static::$_instance = null;
             return true;
         }
-        if (! array_key_exists($driver_id, static::$_instances)) {
+        if (!array_key_exists($driver_id, static::$_instances)) {
             return false;
         }
-
         unset(static::$_instances[$driver_id]);
         return true;
     }
-
     /**
      * Return a specific driver, or the default instance (is created if necessary)
      *
@@ -154,20 +129,16 @@ class Auth
     public static function instance($instance = null)
     {
         if ($instance !== null) {
-            if (! array_key_exists($instance, static::$_instances)) {
+            if (!array_key_exists($instance, static::$_instances)) {
                 return false;
             }
-
             return static::$_instances[$instance];
         }
-
         if (static::$_instance === null) {
             static::$_instance = static::forge();
         }
-
         return static::$_instance;
     }
-
     /**
      * Check login drivers for validated login
      *
@@ -178,7 +149,6 @@ class Auth
     {
         $drivers = $specific === null ? static::$_instances : (array) $specific;
         $verified = static::$_verified;
-
         if ($specific !== null) {
             $verified = [];
             foreach ($drivers as $i) {
@@ -189,27 +159,22 @@ class Auth
                 }
             }
         }
-
         foreach ($drivers as $i) {
-            if (! static::$_verify_multiple && ! empty($verified)) {
+            if (!static::$_verify_multiple && !empty($verified)) {
                 return true;
             }
-
             $i = $i instanceof Auth_Login_Driver ? $i : static::instance($i);
-            if (! array_key_exists($i->get_id(), $verified)) {
+            if (!array_key_exists($i->get_id(), $verified)) {
                 $i->check();
             }
-
             if ($specific) {
                 if (array_key_exists($i->get_id(), $verified)) {
                     return true;
                 }
             }
         }
-
-        return $specific === null && ! empty($verified);
+        return $specific === null && !empty($verified);
     }
-
     /**
      * Get verified driver or all verified drivers
      * returns false when specific driver has not validated
@@ -223,14 +188,11 @@ class Auth
         if ($driver === null) {
             return static::$_verified;
         }
-
-        if (! array_key_exists($driver, static::$_verified)) {
+        if (!array_key_exists($driver, static::$_verified)) {
             return false;
         }
-
         return static::$_verified[$driver];
     }
-
     /**
      * Login user
      *
@@ -241,7 +203,6 @@ class Auth
     public static function login($username_or_email = '', $password = '')
     {
         $loggedin = false;
-
         foreach (static::$_instances as $i) {
             if (!$i instanceof Auth_Login_Driver) {
                 continue;
@@ -250,14 +211,12 @@ class Auth
                 continue;
             }
             $loggedin = true;
-            if (! static::$_verify_multiple) {
+            if (!static::$_verify_multiple) {
                 break;
             }
         }
-
         return $loggedin;
     }
-
     /**
      * Logs out all current logged in drivers
      */
@@ -266,10 +225,8 @@ class Auth
         foreach (static::$_verified as $v) {
             $v->logout();
         }
-
         static::$_verified = [];
     }
-
     /**
      * Register verified Login driver
      *
@@ -279,7 +236,6 @@ class Auth
     {
         static::$_verified[$driver->get_id()] = $driver;
     }
-
     /**
      * Unregister verified Login driver
      *
@@ -289,7 +245,6 @@ class Auth
     {
         unset(static::$_verified[$driver->get_id()]);
     }
-
     /**
      * Register a new driver type
      *
@@ -298,27 +253,18 @@ class Auth
      */
     public static function register_driver_type($type, $check_method): bool
     {
-        $driver_exists = ! is_string($type)
-                        || array_key_exists($type, static::$_drivers)
-                        || method_exists(static::class, $check_method)
-                        || in_array($type, ['login', 'group', 'acl']);
-        $method_exists = ! is_string($type)
-                        || array_search($check_method, static::$_drivers)
-                        || method_exists(static::class, $type);
-
+        $driver_exists = !is_string($type) || array_key_exists($type, static::$_drivers) || method_exists(static::class, $check_method) || in_array($type, ['login', 'group', 'acl']);
+        $method_exists = !is_string($type) || array_search($check_method, static::$_drivers) || method_exists(static::class, $type);
         if ($driver_exists && static::$_drivers[$type] == $check_method) {
             return true;
         }
-
         if ($driver_exists || $method_exists) {
             \Errorhandler::notice('Cannot add driver type, its name conflicts with another driver or method.');
             return false;
         }
-
         static::$_drivers[$type] = $check_method;
         return true;
     }
-
     /**
      * Unregister a driver type
      *
@@ -330,11 +276,9 @@ class Auth
             \Errorhandler::notice('Cannot remove driver type, included drivers login, group and acl cannot be removed.');
             return false;
         }
-
         unset(static::$_drivers[$type]);
         return true;
     }
-
     /**
      * Magic method used to retrieve driver instances and check them for validity
      *
@@ -355,10 +299,8 @@ class Auth
         if (static::$_verify_multiple !== true and method_exists(static::$_instance, $method)) {
             return call_fuel_func_array([static::$_instance, $method], $args);
         }
-
-        throw new \BadMethodCallException('Invalid method: '.static::class.'::'.$method);
+        throw new \BadMethodCallException('Invalid method: ' . static::class . '::' . $method);
     }
-
     /**
      * Retrieve a loaded driver instance
      * (loading must be done by other driver class)
@@ -369,10 +311,9 @@ class Auth
      */
     protected static function _driver_instance($type, $instance)
     {
-        $class = 'Auth_'.\Str::ucwords($type).'_Driver';
+        $class = 'Auth_' . \Str::ucwords($type) . '_Driver';
         return $class::instance($instance);
     }
-
     /**
      * Check driver
      *
@@ -387,22 +328,22 @@ class Auth
         $method = static::$_drivers[$type];
         if ($driver === null) {
             if ($entity === null) {
-                if (! empty(static::$_verified)) {
+                if (!empty(static::$_verified)) {
                     foreach (static::$_verified as $v) {
-                        if ($v->$method($condition)) {
+                        if ($v->{$method}($condition)) {
                             return true;
                         }
                     }
                 } else {
                     foreach (static::$_instances as $i) {
-                        if ($i->guest_login() and $i->$method($condition)) {
+                        if ($i->guest_login() and $i->{$method}($condition)) {
                             return true;
                         }
                     }
                 }
             } else {
                 foreach (static::$_instances as $i) {
-                    if ($i->$method($condition, null, $entity)) {
+                    if ($i->{$method}($condition, null, $entity)) {
                         return true;
                     }
                 }
@@ -410,14 +351,13 @@ class Auth
             return false;
         }
         if ($entity === null) {
-            if (static::_driver_instance($type, $driver)->$method($condition)) {
+            if (static::_driver_instance($type, $driver)->{$method}($condition)) {
                 return true;
             }
-        } elseif (static::_driver_instance($type, $driver)->$method($condition, $entity)) {
+        } elseif (static::_driver_instance($type, $driver)->{$method}($condition, $entity)) {
             return true;
         }
         return false;
     }
 }
-
 /* end of file auth.php */

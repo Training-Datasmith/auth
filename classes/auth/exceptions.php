@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -11,17 +11,14 @@ declare(strict_types=1);
  * @copyright  2010 - 2019 Fuel Development Team
  * @link       https://fuelphp.com
  */
-
 namespace Auth;
 
-class SimpleUserUpdateException extends \FuelException
+class Simple_User_Update_Exception extends \Fuel_Exception
 {
 }
-
-class SimpleUserWrongPassword extends \FuelException
+class Simple_User_Wrong_Password extends \Fuel_Exception
 {
 }
-
-class OpauthException extends \FuelException
+class Opauth_Exception extends \Fuel_Exception
 {
 }

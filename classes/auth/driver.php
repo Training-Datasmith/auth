@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 /**
  * Fuel is a fast, lightweight, community driven PHP 5.4+ framework.
  *
@@ -11,7 +11,6 @@ declare(strict_types=1);
  * @copyright  2010 - 2019 Fuel Development Team
  * @link       https://fuelphp.com
  */
-
 namespace Auth;
 
 abstract class Auth_Driver
@@ -21,18 +20,15 @@ abstract class Auth_Driver
      * THIS MUST BE DEFINED IN THE BASE EXTENSION
      */
     // protected static $_instance = null;
-
     /**
      * @var	array	contains references if multiple were loaded
      * THIS MUST BE DEFINED IN THE BASE EXTENSION
      */
     // protected static $_instances = array();
-
     public static function forge(array $config = [])
     {
-        throw new \AuthException('Driver must have a factory method extension.');
+        throw new \Auth_Exception('Driver must have a factory method extension.');
     }
-
     /**
      * Return a specific driver, or the default instance
      *
@@ -45,33 +41,27 @@ abstract class Auth_Driver
             return static::$_instances;
         }
         if ($instance !== null) {
-            if (! array_key_exists($instance, static::$_instances)) {
+            if (!array_key_exists($instance, static::$_instances)) {
                 return false;
             }
             return static::$_instances[$instance];
         }
-
         return static::$_instance;
     }
-
     // ------------------------------------------------------------------------
-
     /**
      * @var	string	instance identifier
      */
     protected $id;
-
     /**
      * @var	array	given configuration array
      */
     protected array $config = [];
-
     protected function __construct(array $config)
     {
         $this->id = $config['id'];
         $this->config = array_merge($this->config, $config);
     }
-
     /**
      * Get driver instance ID
      *
@@ -81,7 +71,6 @@ abstract class Auth_Driver
     {
         return (string) $this->id;
     }
-
     /**
      * Create or change config value
      *
@@ -92,7 +81,6 @@ abstract class Auth_Driver
     {
         $this->config[$key] = $value;
     }
-
     /**
      * Retrieve config value
      *
@@ -104,7 +92,6 @@ abstract class Auth_Driver
     {
         return array_key_exists($key, $this->config) ? $this->config[$key] : $default;
     }
-
     /**
      * Whether this driver supports guest login
      *
@@ -115,5 +102,4 @@ abstract class Auth_Driver
         return false;
     }
 }
-
 /* end of file driver.php */
