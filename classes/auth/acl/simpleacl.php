@@ -55,12 +55,18 @@ class Auth_Acl_Simpleacl extends \Auth_Acl_Driver
 				}
 				$r_rights = $roles[$r_role];
 
-                // if one of the roles has a negative or positive wildcard return it without question
-                if (array_key_exists($area, $r_rights)) {
-                    $current_rights = array_unique(array_merge($current_rights, $r_rights[$area]));
-                }
-            }
-        }
+				// if one of the roles has a negative or positive wildcard return it without question
+				if (is_bool($r_rights))
+				{
+					return $r_rights;
+				}
+				// if there are roles for the current area, merge them with earlier fetched roles
+				elseif (array_key_exists($area, $r_rights))
+				{
+					$current_rights = array_unique(array_merge($current_rights, $r_rights[$area]));
+				}
+			}
+		}
 
         // start checking rights, terminate false when right not found
         foreach ($rights as $right) {

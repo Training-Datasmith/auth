@@ -23,7 +23,7 @@ class Auth_Group_Simplegroup extends \Auth_Group_Driver
         static::$_valid_groups = array_keys(\Config::get('simpleauth.groups', []));
     }
 
-    protected $config = [
+    protected array $config = [
         'drivers' => ['acl' => ['Simpleacl']],
     ];
 

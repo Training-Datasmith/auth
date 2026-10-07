@@ -64,7 +64,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 	/**
 	 * @var  array  SimpleAuth class config
 	 */
-	protected $config = array(
+	protected array $config = array(
 		'drivers' => array('group' => array('Simplegroup')),
 		'additional_fields' => array('profile_fields'),
 	);
@@ -83,7 +83,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 		// only worth checking if there's both a username and login-hash
 		if ( ! empty($username) and ! empty($login_hash))
 		{
-			if (is_null($this->user) or ($this->user['username'] != $username and $this->user != static::$guest_login))
+			if (is_null($this->user) or ($this->user['username'] !== $username and $this->user !== static::$guest_login))
 			{
 				$this->user = \DB::select_array(\Config::get('simpleauth.table_columns', array('*')))
 					->where('username', '=', $username)
@@ -92,7 +92,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 			}
 
 			// return true when login was verified, and either the hash matches or multiple logins are allowed
-			if ($this->user and (\Config::get('simpleauth.multiple_logins', false) or $this->user['login_hash'] === $login_hash))
+			if ($this->user and (\Config::get('simpleauth.multiple_logins', false) or hash_equals((string) $this->user['login_hash'], (string) $login_hash)))
 			{
 				return true;
 			}
@@ -206,7 +206,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 			->execute(\Config::get('simpleauth.db_connection'))
 			->current();
 
-		if ($this->user == false)
+		if (empty($this->user))
 		{
 			$this->user = \Config::get('simpleauth.guest_login', true) ? static::$guest_login : false;
 			\Session::delete('username');
@@ -351,7 +351,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 		if (array_key_exists('password', $values))
 		{
 			if (empty($values['old_password'])
-				or $current_values['password'] != $this->hash_password(trim($values['old_password']).$current_values['salt']))
+				or ! hash_equals($current_values['password'], $this->hash_password(trim($values['old_password']).$current_values['salt'])))
 			{
 				throw new \SimpleUserWrongPassword('Old password is invalid');
 			}
@@ -404,7 +404,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 
 		if ( ! empty($values))
 		{
-			$profile_fields = @unserialize($current_values['profile_fields']) ?: array();
+			$profile_fields = unserialize($current_values['profile_fields'], ['allowed_classes' => false]) ?: array();
 			foreach ($values as $key => $val)
 			{
 				if ($val === null)
@@ -501,7 +501,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 			// generate a new salt for this user
 			$salt = bin2hex(random_bytes(8));
 
-			$new_password = \Str::random('alnum', 8);
+			$new_password = bin2hex(random_bytes(16));
 			$password = $this->hash_password($new_password . $salt);
 
 			$affected_rows = \DB::update(\Config::get('simpleauth.table_name'))
@@ -622,7 +622,7 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 		{
 			return $this->user[$field];
 		}
-		elseif (isset($this->user['profile_fields']))
+		elseif (is_array($this->user) && array_key_exists('profile_fields', $this->user))
 		{
 			return $this->get_profile_fields($field, $default);
 		}
@@ -667,9 +667,9 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 			return false;
 		}
 
-		if (isset($this->user['profile_fields']))
+		if (is_array($this->user) && array_key_exists('profile_fields', $this->user))
 		{
-			is_array($this->user['profile_fields']) or $this->user['profile_fields'] = (@unserialize($this->user['profile_fields']) ?: array());
+			is_array($this->user['profile_fields']) or $this->user['profile_fields'] = (unserialize($this->user['profile_fields'], ['allowed_classes' => false]) ?: array());
 		}
 		else
 		{

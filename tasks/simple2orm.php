@@ -288,13 +288,13 @@ HELP;
             $group = \Model\Auth_Group::find($group_id);
 
             if ($group) {
-                foreach ($config['roles'] as $role) {
-                    $role = \Model\Auth_Role::query()->where('name', '=', $role)->get_one();
-                    if (! $role) {
-                        $role = \Model\Auth_Role::forge(['name' => $role]);
-                        \Cli::write('- creating role: '.$role, 'light_green');
+                foreach ($config['roles'] as $role_name) {
+                    $role_model = \Model\Auth_Role::query()->where('name', '=', $role_name)->get_one();
+                    if (! $role_model) {
+                        $role_model = \Model\Auth_Role::forge(['name' => $role_name]);
+                        \Cli::write('- creating role: '.$role_name, 'light_green');
                     }
-                    $group->roles[] = $role;
+                    $group->roles[] = $role_model;
                 }
 
                 // update the group and save the roles

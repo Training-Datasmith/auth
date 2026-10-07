@@ -55,4 +55,4 @@ return array(
 	 * Number of iterations used when hashing the password
 	 */
     'iterations'             => 10000,
-];
+);

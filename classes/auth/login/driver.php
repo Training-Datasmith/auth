@@ -59,7 +59,7 @@ abstract class Auth_Login_Driver extends \Auth_Driver
     /**
      * @var  array  config values
      */
-    protected $config = [];
+    protected array $config = [];
 
     /**
      * Check for login

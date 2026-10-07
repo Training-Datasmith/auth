@@ -391,8 +391,8 @@ class SimpleAuthTest extends TestCase
 		}
 
 		$replacement = $driver->reset_password('ada@example.com');
-		$this->assertSame(8, strlen($replacement));
-		$this->assertTrue(ctype_alnum($replacement));
+		$this->assertSame(32, strlen($replacement));
+		$this->assertTrue(ctype_xdigit($replacement));
 		$this->assertFalse($driver->validate_user('ada@example.com', 'secret'));
 		$this->assertIsArray($driver->validate_user('ada@example.com', $replacement));
 

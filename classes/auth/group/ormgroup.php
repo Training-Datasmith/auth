@@ -44,7 +44,7 @@ class Auth_Group_Ormgroup extends \Auth_Group_Driver
     /*
      * additional drivers to load
      */
-    protected $config = [
+    protected array $config = [
         'drivers' => ['acl' => ['Ormacl']],
     ];
 
