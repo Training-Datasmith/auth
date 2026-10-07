@@ -176,7 +176,7 @@ abstract class Auth_Login_Driver extends \Auth_Driver
 		foreach ($conditions as $condition)
 		{
 			// return true on the first hit
-			if ($this->has_access($condition, $entity))
+			if ($this->has_access($condition, $driver, $entity))
 			{
 				return true;
 			}
@@ -199,7 +199,7 @@ abstract class Auth_Login_Driver extends \Auth_Driver
 		foreach ($conditions as $condition)
 		{
 			// return false on the first miss
-			if ( ! $this->has_access($condition, $entity))
+			if ( ! $this->has_access($condition, $driver, $entity))
 			{
 				return false;
 			}

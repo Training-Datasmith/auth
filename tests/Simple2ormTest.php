@@ -26,9 +26,7 @@ class Simple2ormTest extends TestCase
 	{
 		\Cli::$options = array('validate' => true);
 
-		$this->swallowWarnings(function () {
-			Simple2orm::run();
-		});
+		Simple2orm::run();
 
 		$text = implode("\n", array_map(function ($line) {
 			return $line[0];
@@ -43,9 +41,7 @@ class Simple2ormTest extends TestCase
 	{
 		\Cli::$options = array('m' => true);
 
-		$this->swallowWarnings(function () {
-			Simple2orm::run();
-		});
+		Simple2orm::run();
 
 		$text = implode("\n", array_map(function ($line) {
 			return $line[0];

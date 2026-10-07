@@ -492,20 +492,39 @@ class DB
 	}
 }
 
+class DbGroup
+{
+	public $glue;
+	public $parts = array();
+
+	public function __construct($glue = 'AND')
+	{
+		$this->glue = $glue;
+	}
+}
+
 class DbQuery
 {
 	public $type;
 	public $columns;
 	public $table;
-	public $wheres = array();
 	public $values = array();
 	public $limit = null;
 	public $as_object = false;
+	public $root;
+	protected $stack = array();
 
 	public function __construct($type, $columns = null)
 	{
 		$this->type = $type;
 		$this->columns = $columns;
+		$this->root = new DbGroup('AND');
+		$this->stack = array($this->root);
+	}
+
+	protected function currentGroup()
+	{
+		return $this->stack[count($this->stack) - 1];
 	}
 
 	public function from($table)
@@ -538,25 +557,54 @@ class DbQuery
 
 	public function where($field, $op, $value)
 	{
-		$this->wheres[] = array('AND', $field, $op, $value);
+		$this->currentGroup()->parts[] = array('AND', array($field, $op, $value));
 
 		return $this;
 	}
 
 	public function or_where($field, $op, $value)
 	{
-		$this->wheres[] = array('OR', $field, $op, $value);
+		$this->currentGroup()->parts[] = array('OR', array($field, $op, $value));
 
 		return $this;
 	}
 
 	public function where_open()
 	{
-		return $this;
+		return $this->openGroup('AND');
+	}
+
+	public function or_where_open()
+	{
+		return $this->openGroup('OR');
 	}
 
 	public function where_close()
 	{
+		return $this->closeGroup();
+	}
+
+	public function or_where_close()
+	{
+		return $this->closeGroup();
+	}
+
+	protected function openGroup($glue)
+	{
+		$group = new DbGroup($glue);
+		$this->currentGroup()->parts[] = array($glue, $group);
+		$this->stack[] = $group;
+
+		return $this;
+	}
+
+	protected function closeGroup()
+	{
+		if (count($this->stack) > 1)
+		{
+			array_pop($this->stack);
+		}
+
 		return $this;
 	}
 
@@ -676,78 +724,66 @@ class DbQuery
 
 	public function matches(array $row)
 	{
-		if (empty($this->wheres))
+		return $this->groupMatches($this->root, $row);
+	}
+
+	protected function groupMatches(DbGroup $group, array $row)
+	{
+		if (empty($group->parts))
 		{
 			return true;
 		}
 
 		$ok = null;
-		foreach ($this->wheres as $index => $where)
+		foreach ($group->parts as $part)
 		{
-			list($glue, $field, $op, $value) = $where;
-			$actual = array_key_exists($field, $row) ? $row[$field] : null;
-			if ($op === '!=' or $op === '<>')
-			{
-				$part = $actual != $value;
-			}
-			else
-			{
-				$part = $actual == $value;
-			}
+			list($glue, $node) = $part;
+			$value = $node instanceof DbGroup ? $this->groupMatches($node, $row) : $this->compare($row, $node);
 
-			if ($ok === null or $index === 0)
+			if ($ok === null)
 			{
-				$ok = $part;
+				$ok = $value;
 			}
 			elseif ($glue === 'OR')
 			{
-				$ok = $ok || $part;
+				$ok = $ok || $value;
 			}
 			else
 			{
-				$ok = $ok && $part;
+				$ok = $ok && $value;
 			}
 		}
 
 		return (bool) $ok;
 	}
-}
 
-class DbResult implements \Countable, \IteratorAggregate
-{
-	protected $rows;
-	protected $as_object;
-
-	public function __construct(array $rows, $as_object = false)
+	protected function compare(array $row, array $condition)
 	{
-		$this->rows = array_values($rows);
-		$this->as_object = $as_object;
-	}
-
-	public function current()
-	{
-		if (empty($this->rows))
+		list($field, $op, $value) = $condition;
+		$actual = array_key_exists($field, $row) ? $row[$field] : null;
+		if ($op === '!=' or $op === '<>')
 		{
-			return null;
+			return $actual != $value;
 		}
 
-		$row = $this->rows[0];
-
-		return $this->as_object ? (object) $row : $row;
-	}
-
-	public function count(): int
-	{
-		return count($this->rows);
-	}
-
-	public function getIterator(): \Traversable
-	{
-		return new \ArrayIterator($this->rows);
+		return $actual == $value;
 	}
 }
 
 function call_fuel_func_array($callback, array $args)
 {
 	return call_user_func_array($callback, $args);
+}
+
+if (PHP_VERSION_ID >= 80100)
+{
+	require __DIR__.'/DbResult81.php';
+}
+elseif (PHP_VERSION_ID >= 80000)
+{
+	require __DIR__.'/DbResult80.php';
+}
+else
+{
+	require __DIR__.'/DbResult74.php';
 }

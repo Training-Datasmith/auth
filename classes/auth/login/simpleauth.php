@@ -111,14 +111,35 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 	}
 
 	/**
+	 * Use a trimmed argument, or the matching POST field when that argument is empty.
+	 *
+	 * Empty POST values are not passed to trim(), which warns on null as of PHP 8.1.
+	 *
+	 * @param   string|null  $value
+	 * @param   string       $post_key
+	 * @return  string
+	 */
+	protected static function posted_credential($value, $post_key)
+	{
+		$value = trim($value === null ? '' : $value);
+		if ($value === '')
+		{
+			$posted = \Input::post($post_key);
+			$value = trim($posted === null ? '' : $posted);
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Check the user exists
 	 *
 	 * @return  bool
 	 */
 	public function validate_user($username_or_email = '', $password = '')
 	{
-		$username_or_email = trim($username_or_email) ?: trim(\Input::post(\Config::get('simpleauth.username_post_key', 'username')));
-		$password = trim($password) ?: trim(\Input::post(\Config::get('simpleauth.password_post_key', 'password')));
+		$username_or_email = self::posted_credential($username_or_email, \Config::get('simpleauth.username_post_key', 'username'));
+		$password = self::posted_credential($password, \Config::get('simpleauth.password_post_key', 'password'));
 
 		if (empty($username_or_email) or empty($password))
 		{
@@ -336,13 +357,13 @@ class Auth_Login_Simpleauth extends \Auth_Login_Driver
 
 		$current_values = $user->execute(\Config::get('simpleauth.db_connection'))->current();
 
-		// updating the current user?
-		$current_user = $current_values['id'] == $this->user['id'];
-
 		if (empty($current_values))
 		{
 			throw new \SimpleUserUpdateException('User not found', 4);
 		}
+
+		// updating the current user?
+		$current_user = $current_values['id'] == $this->user['id'];
 
 		$update = array();
 

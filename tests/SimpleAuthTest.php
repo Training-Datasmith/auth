@@ -90,8 +90,9 @@ class SimpleAuthTest extends TestCase
 		$driver = $this->forgeSimpleAuth();
 		$driver->create_user('ada', 'secret', 'ada@example.com');
 
-		\Input::$post = array('username' => '', 'password' => '');
+		\Input::$post = array();
 		$this->assertFalse($driver->validate_user('', ''));
+		$this->assertFalse($driver->validate_user());
 		$this->assertFalse($driver->validate_user('ada', ''));
 		$this->assertFalse($driver->validate_user('ada', 'wrong'));
 		$this->assertIsArray($driver->validate_user('ada', 'secret'));
@@ -371,9 +372,7 @@ class SimpleAuthTest extends TestCase
 
 		$this->expectException(\SimpleUserUpdateException::class);
 		$this->expectExceptionCode(4);
-		$this->swallowWarnings(function () use ($driver) {
-			$driver->update_user(array('email' => 'new@example.com'), 'missing');
-		});
+		$driver->update_user(array('email' => 'new@example.com'), 'missing');
 	}
 
 	public function test_reset_and_delete_follow_login_type()
@@ -447,9 +446,21 @@ class SimpleAuthTest extends TestCase
 		$this->assertTrue($driver->has_all_access(array()));
 		$this->assertFalse($driver->has_any_access(array()));
 
-		// The driver argument is not forwarded; the third value is passed through as the driver id.
-		$this->assertTrue($driver->has_any_access(array('comments.read'), 'ignored'));
-		$this->assertTrue($driver->has_any_access(array('comments.read'), null, 'Simpleacl'));
+		$this->assertTrue($driver->has_any_access(array('comments.delete'), 'Simpleacl', array('Simplegroup', 50)));
+		$this->assertFalse($driver->has_any_access(array('comments.delete'), 'Simpleacl', array('Simplegroup', 1)));
+		$this->assertTrue($driver->has_any_access(array('secrets.delete'), 'Simpleacl', array('Simplegroup', 100)));
+		$this->assertFalse($driver->has_all_access(array('comments.read', 'comments.delete'), 'Simpleacl', array('Simplegroup', 1)));
+		$this->assertTrue($driver->has_all_access(array('comments.create', 'comments.read'), 'Simpleacl', array('Simplegroup', 1)));
+
+		try
+		{
+			$driver->has_any_access(array('comments.read'), 'missing-acl');
+			$this->fail('an unknown acl driver should not be reported as allowed');
+		}
+		catch (\Error $e)
+		{
+			$this->assertStringContainsString('has_access', $e->getMessage());
+		}
 	}
 
 	public function test_profile_dot_notation_and_serialized_profile_strings()

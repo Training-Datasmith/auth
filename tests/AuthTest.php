@@ -107,14 +107,22 @@ class AuthTest extends TestCase
 		\Auth\Auth::instance();
 	}
 
-	public function test_unload_of_a_known_id_is_a_no_op_and_an_unknown_id_returns_true()
+	public function test_unload_removes_a_known_id_and_rejects_an_unknown_id()
 	{
 		$driver = \Auth\Auth::forge(array('driver' => 'Simpleauth', 'id' => 'front'));
 
-		$this->assertFalse(\Auth\Auth::unload('front'));
+		$this->assertFalse(\Auth\Auth::unload('missing'));
 		$this->assertSame($driver, \Auth\Auth::instance('front'));
-		$this->assertTrue(\Auth\Auth::unload('missing'));
-		$this->assertTrue(\Auth\Auth::unload());
+		$this->assertFalse(\Auth\Auth::unload());
+
+		$this->assertTrue(\Auth\Auth::unload('front'));
+		$this->assertFalse(\Auth\Auth::instance('front'));
+
+		$again = \Auth\Auth::forge(array('driver' => 'Simpleauth', 'id' => 'front'));
+		$this->setStatic('Auth\\Auth', '_instance', $again);
+		$this->assertTrue(\Auth\Auth::unload('front'));
+		$this->assertNull($this->getStatic('Auth\\Auth', '_instance'));
+		$this->assertFalse(\Auth\Auth::instance('front'));
 	}
 
 	public function test_login_stops_at_the_first_success_unless_multiple_verification_is_enabled()
@@ -191,7 +199,7 @@ class AuthTest extends TestCase
 		$driver = \Auth\Auth::forge(array('driver' => 'Stub', 'id' => 'stub'));
 		$driver->check_result = true;
 
-		$this->assertFalse(\Auth\Auth::check());
+		$this->assertTrue(\Auth\Auth::check());
 		$this->assertSame(1, $driver->checks);
 		$this->assertSame($driver, \Auth\Auth::verified('stub'));
 
@@ -213,9 +221,10 @@ class AuthTest extends TestCase
 		$this->assertSame(array(), \Auth\Auth::verified());
 
 		$driver->check_result = true;
-		$this->assertFalse(\Auth\Auth::check(array($driver)));
+		$this->assertTrue(\Auth\Auth::check(array($driver)));
 		$this->assertSame($driver, \Auth\Auth::verified('stub'));
 		$this->assertTrue(\Auth\Auth::check(array($driver)));
+		$this->assertSame(3, $driver->checks);
 	}
 
 	public function test_register_driver_type_accepts_new_types_and_existing_pairs()
@@ -231,14 +240,16 @@ class AuthTest extends TestCase
 	{
 		$this->assertFalse(\Auth\Auth::register_driver_type('acl', 'member'));
 		$this->assertNotEmpty(\Errorhandler::$notices);
+		$this->assertStringContainsString('Cannot add driver type', \Errorhandler::$notices[0]);
 
-		$warned = $this->swallowWarnings(function () {
-			return \Auth\Auth::register_driver_type('login', 'missing_method');
-		});
-		$this->assertFalse($warned);
+		\Errorhandler::reset();
+		$this->assertFalse(\Auth\Auth::register_driver_type('login', 'missing_method'));
+		$this->assertNotEmpty(\Errorhandler::$notices);
+		$this->assertStringContainsString('Cannot add driver type', \Errorhandler::$notices[0]);
+		$this->assertArrayNotHasKey('missing_method', $this->getStatic('Auth\\Auth', '_drivers'));
 	}
 
-	public function test_unregister_driver_type_protects_builtins_and_does_not_remove_custom_types()
+	public function test_unregister_driver_type_protects_builtins_and_removes_custom_types()
 	{
 		\Auth\Auth::register_driver_type('custom', 'custom_check');
 
@@ -248,13 +259,15 @@ class AuthTest extends TestCase
 		$this->assertTrue(\Auth\Auth::unregister_driver_type('custom'));
 
 		$drivers = $this->getStatic('Auth\\Auth', '_drivers');
-		$this->assertSame('custom', $drivers['custom_check']);
+		$this->assertArrayNotHasKey('custom_check', $drivers);
+		$this->assertSame('group', $drivers['member']);
 		$this->assertNotEmpty(\Errorhandler::$notices);
+		$this->assertStringContainsString('Cannot remove driver type', \Errorhandler::$notices[0]);
 	}
 
 	public function test_magic_calls_resolve_group_and_acl_drivers_and_delegate_login_methods()
 	{
-		$login = $this->forgeSimpleAuth();
+		$login = $this->bootSimpleAuth();
 		$login->create_user('ada', 'secret', 'ada@example.com', 1);
 		$this->assertTrue($login->login('ada', 'secret'));
 
@@ -301,7 +314,7 @@ class AuthTest extends TestCase
 
 	public function test_guest_access_uses_guest_login_when_nobody_is_verified()
 	{
-		$login = $this->forgeSimpleAuth();
+		$login = $this->bootSimpleAuth();
 		$this->assertFalse($login->login('missing', 'secret'));
 
 		$this->assertTrue(\Auth\Auth::has_access('website.[read]'));

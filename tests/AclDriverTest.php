@@ -1,7 +1,5 @@
 <?php
 
-use PHPUnit\Framework\Attributes\DataProvider;
-
 class AclDriverTest extends TestCase
 {
 	public static function conditionProvider()
@@ -18,7 +16,9 @@ class AclDriverTest extends TestCase
 		);
 	}
 
-	#[DataProvider('conditionProvider')]
+	/**
+	 * @dataProvider conditionProvider
+	 */
 	public function test_parse_conditions($input, $expected)
 	{
 		$this->assertSame($expected, \Auth\Auth_Acl_Driver::_parse_conditions($input));

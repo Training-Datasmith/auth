@@ -1,13 +1,10 @@
 <?php
 
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
-
 class OpauthTest extends TestCase
 {
 	/**
 	 * @runInSeparateProcess
 	 */
-	#[RunInSeparateProcess]
 	public function test_init_requires_the_opauth_library()
 	{
 		$this->expectException(\OpauthException::class);
@@ -250,7 +247,7 @@ PHP);
 
 	public function test_login_or_register_creates_and_logs_in_a_new_user()
 	{
-		$this->forgeSimpleAuth();
+		$this->bootSimpleAuth();
 		\Config::set('opauth.default_group', 50);
 		$opauth = $this->forgeOpauth(array(
 			'provider' => 'Facebook',
@@ -274,7 +271,7 @@ PHP);
 
 	public function test_auto_registration_fills_a_password_and_uses_email_as_the_username()
 	{
-		$this->forgeSimpleAuth();
+		$this->bootSimpleAuth();
 		$opauth = $this->forgeOpauth(array(
 			'provider' => 'Facebook',
 			'auto_registration' => true,
@@ -291,7 +288,7 @@ PHP);
 
 	public function test_existing_provider_forces_login()
 	{
-		$driver = $this->forgeSimpleAuth();
+		$driver = $this->bootSimpleAuth();
 		$id = $driver->create_user('ada', 'secret', 'ada@example.com');
 		\DB::insert('users_providers')->set(array(
 			'id' => 4,
@@ -309,7 +306,7 @@ PHP);
 
 	public function test_logged_in_user_can_link_a_provider()
 	{
-		$driver = $this->forgeSimpleAuth();
+		$driver = $this->bootSimpleAuth();
 		$driver->create_user('ada', 'secret', 'ada@example.com');
 		$this->assertTrue($driver->login('ada', 'secret'));
 		$opauth = $this->forgeOpauth(array(
@@ -326,7 +323,7 @@ PHP);
 
 	public function test_link_provider_replaces_duplicates_and_parses_expiry()
 	{
-		$this->forgeSimpleAuth();
+		$this->bootSimpleAuth();
 		$opauth = $this->forgeOpauth(array('provider' => 'Facebook'), false);
 		\DB::insert('users_providers')->set(array(
 			'parent_id' => 1,
@@ -335,36 +332,41 @@ PHP);
 			'expires' => 1,
 		))->execute();
 
-		$id = $this->swallowWarnings(function () use ($opauth) {
-			return $opauth->link_provider(array(
-				'parent_id' => 9,
-				'provider' => 'Facebook',
-				'uid' => 'uid-1',
-				'expires' => '2020-01-02 03:04:05',
-			));
-		});
+		$id = $opauth->link_provider(array(
+			'parent_id' => 9,
+			'provider' => 'Facebook',
+			'uid' => 'uid-1',
+			'expires' => '2020-01-02 03:04:05',
+		));
 
 		$this->assertNotFalse($id);
 		$this->assertCount(1, \DB::$tables['users_providers']);
 		$this->assertSame(9, \DB::$tables['users_providers'][0]['parent_id']);
 		$this->assertSame(\DateTime::createFromFormat('Y-m-d H:i:s', '2020-01-02 03:04:05')->getTimestamp(), \DB::$tables['users_providers'][0]['expires']);
 
+		$opauth->link_provider(array(
+			'parent_id' => 9,
+			'provider' => 'Facebook',
+			'uid' => 'uid-1',
+			'expires' => '2020-01-02T03:04:05+0000',
+		));
+		$this->assertCount(1, \DB::$tables['users_providers']);
+		$this->assertSame(\DateTime::createFromFormat('Y-m-d\TH:i:sO', '2020-01-02T03:04:05+0000')->getTimestamp(), \DB::$tables['users_providers'][0]['expires']);
+
 		$before = time();
-		$this->swallowWarnings(function () use ($opauth) {
-			$opauth->link_provider(array(
-				'parent_id' => 9,
-				'provider' => 'Facebook',
-				'uid' => 'uid-2',
-				'expires' => 'not-a-date',
-			));
-		});
+		$opauth->link_provider(array(
+			'parent_id' => 9,
+			'provider' => 'Facebook',
+			'uid' => 'uid-2',
+			'expires' => 'not-a-date',
+		));
 		$this->assertGreaterThanOrEqual($before, \DB::$tables['users_providers'][1]['expires']);
 		$this->assertLessThanOrEqual(time(), \DB::$tables['users_providers'][1]['expires']);
 	}
 
 	public function test_a_user_cannot_link_a_second_provider_when_that_is_disabled()
 	{
-		$driver = $this->forgeSimpleAuth();
+		$driver = $this->bootSimpleAuth();
 		$id = $driver->create_user('ada', 'secret', 'ada@example.com');
 		\DB::insert('users_providers')->set(array(
 			'parent_id' => $id,
@@ -387,6 +389,7 @@ PHP);
 	{
 		$opauth = $this->forgeOpauth(array('provider' => 'Facebook'), false);
 		$property = new ReflectionProperty($opauth, 'response');
+		$property->setAccessible(true);
 		$property->setValue($opauth, 'nope');
 
 		$this->assertSame('fallback', $opauth->get('auth.uid', 'fallback'));
@@ -394,9 +397,10 @@ PHP);
 
 	public function test_create_user_builds_a_fullname_from_first_and_last_name()
 	{
-		$this->forgeSimpleAuth();
+		$this->bootSimpleAuth();
 		$opauth = $this->forgeOpauth(array('provider' => 'Facebook', 'default_group' => 1), false);
 		$method = new ReflectionMethod($opauth, 'create_user');
+		$method->setAccessible(true);
 		$id = $method->invoke($opauth, array(
 			'nickname' => 'ada',
 			'email' => 'ada@example.com',

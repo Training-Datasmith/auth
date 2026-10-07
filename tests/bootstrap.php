@@ -7,7 +7,7 @@ if ( ! defined('DS'))
 
 if ( ! defined('APPPATH'))
 {
-	define('APPPATH', sys_get_temp_dir().DS.'fuel-auth-tests'.DS);
+	define('APPPATH', sys_get_temp_dir().DS.'fuel-auth-tests-'.getmypid().DS);
 }
 
 if ( ! is_dir(APPPATH))

@@ -138,18 +138,27 @@ class Auth
 	 */
 	public static function unload($driver_id = null)
 	{
-		if ($driver_id === null && ! empty(static::$_instance))
+		if ($driver_id === null)
 		{
-			unset(static::$_instances[static::$_instance->get_id()]);
-			static::$_instance = null;
-			return true;
+			if (empty(static::$_instance))
+			{
+				return false;
+			}
+
+			$driver_id = static::$_instance->get_id();
 		}
-		elseif (array_key_exists($driver_id, static::$_instances))
+
+		if ( ! array_key_exists($driver_id, static::$_instances))
 		{
 			return false;
 		}
 
 		unset(static::$_instances[$driver_id]);
+		if ( ! empty(static::$_instance) and static::$_instance->get_id() == $driver_id)
+		{
+			static::$_instance = null;
+		}
+
 		return true;
 	}
 
@@ -212,6 +221,10 @@ class Auth
 			if ( ! array_key_exists($i->get_id(), $verified))
 			{
 				$i->check();
+				if (isset(static::$_verified[$i->get_id()]))
+				{
+					$verified[$i->get_id()] = static::$_verified[$i->get_id()];
+				}
 			}
 
 			if ($specific)
@@ -328,7 +341,7 @@ class Auth
 						|| array_search($check_method, array_keys(static::$_drivers))
 						|| method_exists(get_called_class(), $type);
 
-		if ($driver_exists && static::$_drivers[$check_method] == $type)
+		if ($driver_exists && array_key_exists($check_method, static::$_drivers) && static::$_drivers[$check_method] == $type)
 		{
 			return true;
 		}
@@ -358,7 +371,7 @@ class Auth
 			return false;
 		}
 
-		static::$_drivers == array_diff(static::$_drivers, array($type));
+		static::$_drivers = array_diff(static::$_drivers, array($type));
 		return true;
 	}
 

@@ -103,10 +103,17 @@ abstract class TestCase extends PhpUnitTestCase
 	protected function forgeSimpleAuth(array $config = array())
 	{
 		$config = array_merge(array('driver' => 'Simpleauth'), $config);
-		$driver = \Auth\Auth::forge($config);
 
-		// Auth::_init() publishes the first forged driver as the static default.
-		// forge() itself does not, so tests that mirror a booted package do it here.
+		return \Auth\Auth::forge($config);
+	}
+
+	/**
+	 * Forge SimpleAuth and publish it as the default instance, which is what Auth::_init() does.
+	 * forge() itself leaves the default null.
+	 */
+	protected function bootSimpleAuth(array $config = array())
+	{
+		$driver = $this->forgeSimpleAuth($config);
 		if ($this->getStatic('Auth\\Auth', '_instance') === null)
 		{
 			$this->setStatic('Auth\\Auth', '_instance', $driver);
@@ -118,28 +125,15 @@ abstract class TestCase extends PhpUnitTestCase
 	protected function setStatic($class, $property, $value)
 	{
 		$reflection = new ReflectionProperty($class, $property);
+		$reflection->setAccessible(true);
 		$reflection->setValue(null, $value);
 	}
 
 	protected function getStatic($class, $property)
 	{
 		$reflection = new ReflectionProperty($class, $property);
+		$reflection->setAccessible(true);
 
 		return $reflection->getValue(null);
-	}
-
-	protected function swallowWarnings(callable $callback)
-	{
-		set_error_handler(function () {
-			return true;
-		});
-		try
-		{
-			return $callback();
-		}
-		finally
-		{
-			restore_error_handler();
-		}
 	}
 }

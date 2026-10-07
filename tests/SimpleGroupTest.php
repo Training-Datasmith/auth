@@ -28,7 +28,7 @@ class SimpleGroupTest extends TestCase
 
 	public function test_current_guest_membership_name_and_roles()
 	{
-		$login = $this->forgeSimpleAuth();
+		$login = $this->bootSimpleAuth();
 		$this->assertFalse($login->check());
 		$group = \Auth\Auth::group('Simplegroup');
 
@@ -41,7 +41,7 @@ class SimpleGroupTest extends TestCase
 
 	public function test_membership_uses_the_loaded_login_driver_not_the_supplied_user_id()
 	{
-		$login = $this->forgeSimpleAuth();
+		$login = $this->bootSimpleAuth();
 		$login->create_user('ada', 'secret', 'ada@example.com', 50);
 		$this->assertTrue($login->login('ada', 'secret'));
 		$group = \Auth\Auth::group('Simplegroup');
@@ -80,19 +80,19 @@ class SimpleGroupTest extends TestCase
 		$this->assertTrue($login->login('ada', 'secret'));
 		$group = \Auth\Auth::group('Simplegroup');
 
-		$any = $this->swallowWarnings(function () use ($group) {
-			return $group->has_any_access(array('comments.delete', 'comments.read'), null, array('Simplegroup', 100));
-		});
-		$all = $this->swallowWarnings(function () use ($group) {
-			return $group->has_all_access(array('comments.read', 'comments.delete'), 'Simpleacl', array('Simplegroup', 1));
-		});
-
-		// The group helpers reference an undefined $entity, so the explicit group is ignored
-		// and the verified user's own rights are checked instead.
-		$this->assertTrue($any);
-		$this->assertFalse($all);
+		$this->assertTrue($group->has_any_access(array('secrets.delete'), null, array('Simplegroup', 100)));
+		$this->assertFalse($group->has_any_access(array('comments.delete'), 'Simpleacl', array('Simplegroup', 1)));
+		$this->assertFalse($group->has_all_access(array('comments.read', 'comments.delete'), 'Simpleacl', array('Simplegroup', 1)));
+		$this->assertTrue($group->has_all_access(array('comments.read', 'comments.create'), 'Simpleacl', array('Simplegroup', 1)));
 		$this->assertTrue($group->has_access('comments.read', null, array('Simplegroup', 1)));
 		$this->assertFalse($group->has_access('comments.delete', 'Simpleacl', array('Simplegroup', 1)));
+	}
+
+	public function test_group_has_access_for_verified_users_does_not_overwrite_driver_id()
+	{
+		$this->markTestIncomplete(
+			'Auth_Group_Driver::has_access() assigns $this->id = $g_id[0] (classes/auth/group/driver.php:91) when no group is given. That overwrites the driver id while scanning verified users. Left incomplete because changing it is ambiguous when more than one group driver is loaded.'
+		);
 	}
 
 	public function test_group_access_without_a_verified_user_fails()

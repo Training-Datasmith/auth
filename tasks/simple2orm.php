@@ -187,7 +187,7 @@ HELP;
 
 		// check if all migrations have run, and the migration system is consistent
 		$migrations = \Config::load('migrations', true);
-		if ( ! isset($migrations['version']['package']['auth'][6]))
+		if ( ! is_array($migrations) || ! isset($migrations['version']['package']['auth'][6]))
 		{
 			$errors[] = 'Auth database migrations haven\'t run (succesfully).';
 		}
@@ -216,16 +216,19 @@ HELP;
 			'updated_at' => array('type' => 'int', 'constraint' => 11, 'default' => 0, 'after' => 'created_at'),
 			);
 
-		foreach ($usertable as $field => $value)
+		if (isset(static::$data['ormauth_table']))
 		{
-			if (\DBUtil::field_exists(static::$data['ormauth_table'], $field))
+			foreach ($usertable as $field => $value)
 			{
-				unset($usertable[$field]);
+				if (\DBUtil::field_exists(static::$data['ormauth_table'], $field))
+				{
+					unset($usertable[$field]);
+				}
 			}
-		}
-		if ( ! empty($usertable))
-		{
-			$errors[] = 'User table "'.static::$data['ormauth_table'].'" is missing the field(s): '.implode(', ', array_keys($usertable));
+			if ( ! empty($usertable))
+			{
+				$errors[] = 'User table "'.static::$data['ormauth_table'].'" is missing the field(s): '.implode(', ', array_keys($usertable));
+			}
 		}
 
 		// process the results of the validation

@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Test floor is PHP >=7.4 <8.4 (require-dev). The package runtime requirement is unchanged. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="tests/bootstrap.php"
          colors="true"
-         cacheDirectory="/tmp/fuel-auth-phpunit"
+         cacheResultFile="/tmp/fuel-auth-phpunit.cache"
+         convertDeprecationsToExceptions="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         failOnRisky="true"
          failOnWarning="true"
-         failOnNotice="true"
-         failOnDeprecation="false"
          executionOrder="default">
     <testsuites>
         <testsuite name="auth">
