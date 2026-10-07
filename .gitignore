@@ -8,3 +8,6 @@ desktop.ini
 .settings
 nbproject/
 .idea
+/vendor/
+.phpunit.cache/
+.phpunit.result.cache
