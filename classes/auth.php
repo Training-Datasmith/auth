@@ -338,7 +338,7 @@ class Auth
 						|| method_exists(get_called_class(), $check_method)
 						|| in_array($type, array('login', 'group', 'acl'));
 		$method_exists = ! is_string($type)
-						|| array_search($check_method, array_keys(static::$_drivers))
+						|| array_key_exists($check_method, static::$_drivers)
 						|| method_exists(get_called_class(), $type);
 
 		if ($driver_exists && array_key_exists($check_method, static::$_drivers) && static::$_drivers[$check_method] == $type)
@@ -390,12 +390,12 @@ class Auth
 			array_unshift($args, $method);
 			return static::_driver_instance(...$args);
 		}
-		if ($type = array_search($method, array_keys(static::$_drivers)))
+		if (array_key_exists($method, static::$_drivers))
 		{
-			array_unshift($args, array_keys(static::$_drivers)[$type]);
+			array_unshift($args, $method);
 			return static::_driver_check(...$args);
 		}
-		if (static::$_verify_multiple !== true and method_exists(static::$_instance, $method))
+		if (static::$_verify_multiple !== true and static::$_instance !== null and method_exists(static::$_instance, $method))
 		{
 			return call_fuel_func_array(array(static::$_instance, $method), $args);
 		}

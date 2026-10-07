@@ -234,6 +234,13 @@ class AuthTest extends TestCase
 		$this->assertSame('custom', $drivers['custom_check']);
 	}
 
+	public function test_register_driver_type_rejects_the_first_registered_check_method()
+	{
+		$this->assertFalse(\Auth\Auth::register_driver_type('custom', 'member'));
+		$drivers = $this->getStatic('Auth\\Auth', '_drivers');
+		$this->assertSame('group', $drivers['member']);
+	}
+
 	public function test_register_driver_type_rejects_conflicts()
 	{
 		$this->assertFalse(\Auth\Auth::register_driver_type('acl', 'member'));
@@ -297,6 +304,27 @@ class AuthTest extends TestCase
 		$this->expectException(\BadMethodCallException::class);
 		$this->expectExceptionMessage('Invalid method');
 		\Auth\Auth::not_a_real_method();
+	}
+
+	public function test_unknown_delegated_method_without_default_instance_throws_bad_method_call_exception()
+	{
+		$this->assertNull($this->getStatic('Auth\\Auth', '_instance'));
+
+		$this->expectException(\BadMethodCallException::class);
+		$this->expectExceptionMessage('Invalid method');
+		\Auth\Auth::get_email();
+	}
+
+	public function test_member_is_a_driver_check_when_multiple_logins_are_verified()
+	{
+		\Config::set('auth.verify_multiple_logins', true);
+		$login = $this->bootSimpleAuth();
+		\Auth\Auth::forge(array('driver' => 'Stub', 'id' => 'second'));
+		$login->create_user('ada', 'secret', 'ada@example.com', 50);
+		$this->assertTrue($login->login('ada', 'secret'));
+
+		$this->assertTrue(\Auth\Auth::member(50));
+		$this->assertFalse(\Auth\Auth::member(100));
 	}
 
 	public function test_static_delegation_is_disabled_when_multiple_logins_are_verified()
