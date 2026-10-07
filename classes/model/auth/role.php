@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -31,42 +31,41 @@ class Auth_Role extends \Orm\Model
      */
     protected static $_table_name;
 
-    /**
-     * @var array	model properties
-     */
-    protected static $_properties = [
-        'id'              => [],
-        'name'            => [
-            'label'       => 'auth_model_role.name',
-            'default'     => 0,
-            'null'        => false,
-            'validation'  => ['required', 'max_length' => [255]],
-        ],
-        'filter'          => [
-            'label'       => 'auth_model_role.filter',
-            'data_type'   => 'enum',
-            'options'     => ['', 'A', 'D', 'R'],
-            'null'        => false,
-            'form'        => ['type' => 'select'],
-            'validation'  => [],
-            'default'     => '',
-        ],
-        'user_id'         => [
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => false],
-        ],
-        'created_at'      => [
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => false],
-        ],
-        'updated_at'      => [
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => false],
-        ],
-    ];
+	/**
+	 * @var array	model properties
+	 */
+	protected static $_properties = array(
+		'id'              => array(),
+		'name'            => array(
+			'label'       => 'auth_model_role.name',
+			'null'        => false,
+			'validation'  => array('required', 'max_length' => array(255)),
+		),
+		'filter'          => array(
+			'label'       => 'auth_model_role.filter',
+			'data_type'   => 'enum',
+			'options'     => array('', 'A', 'D', 'R'),
+			'null'        => false,
+			'form'        => array('type' => 'select'),
+			'validation'  => array(),
+			'default'     => '',
+		),
+		'user_id'         => array(
+			'default'     => 0,
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+		'created_at'      => array(
+			'default'     => 0,
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+		'updated_at'      => array(
+			'default'     => 0,
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+	);
 
     /**
      * @var array	defined observers
@@ -91,17 +90,17 @@ class Auth_Role extends \Orm\Model
         ],
     ];
 
-    /**
-     * @var array	has_many relationships
-     */
-    protected static $_has_many = [
-        'rolepermission' => [
-            'model_to' => 'Model\\Auth_Rolepermission',
-            'key_from' => 'id',
-            'key_to'   => 'role_id',
-            'cascade_delete' => false,
-        ],
-    ];
+	/**
+	 * @var array	has_many relationships
+	 */
+	protected static $_has_many = array(
+		'rolepermission' => array(
+			'model_to' => 'Model\\Auth_Rolepermission',
+			'key_from' => 'id',
+			'key_to'   => 'role_id',
+			'constraint' => \Orm\Relation::CONSTRAINT_CASCADE,
+		),
+	);
 
     /**
      * @var array	many_many relationships

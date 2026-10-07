@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -97,35 +97,59 @@ class Auth_Permission extends \Orm\Model
         ],
     ];
 
-    /**
-     * @var array	many_many relationships
-     */
-    protected static $_many_many = [
-        'users' => [
-            'key_from' => 'id',
-            'model_to' => 'Model\\Auth_User',
-            'key_to' => 'id',
-            'table_through' => null,
-            'key_through_from' => 'perms_id',
-            'key_through_to' => 'user_id',
-        ],
-        'groups' => [
-            'key_from' => 'id',
-            'model_to' => 'Model\\Auth_Group',
-            'key_to' => 'id',
-            'table_through' => null,
-            'key_through_from' => 'perms_id',
-            'key_through_to' => 'group_id',
-        ],
-        'roles' => [
-            'key_from' => 'id',
-            'model_to' => 'Model\\Auth_Role',
-            'key_to' => 'id',
-            'table_through' => null,
-            'key_through_from' => 'perms_id',
-            'key_through_to' => 'role_id',
-        ],
-    ];
+	/**
+	 * @var array	has_many relationships
+	 */
+	protected static $_has_many = array(
+		'userpermission' => array(
+			'model_to' => 'Model\\Auth_Userpermission',
+			'key_from' => 'id',
+			'key_to'   => 'user_id',
+			'cascade_delete' => true,
+		),
+		'grouppermission' => array(
+			'model_to' => 'Model\\Auth_Grouppermission',
+			'key_from' => 'id',
+			'key_to'   => 'group_id',
+			'cascade_delete' => true,
+		),
+		'rolepermission' => array(
+			'model_to' => 'Model\\Auth_Rolepermission',
+			'key_from' => 'id',
+			'key_to'   => 'role_id',
+			'cascade_delete' => true,
+		),
+	);
+
+	/**
+	 * @var array	many_many relationships
+	 */
+	protected static $_many_many = array(
+		'users' => array(
+			'key_from' => 'id',
+			'model_to' => 'Model\\Auth_User',
+			'key_to' => 'id',
+			'table_through' => null,
+			'key_through_from' => 'perms_id',
+			'key_through_to' => 'user_id',
+		),
+		'groups' => array(
+			'key_from' => 'id',
+			'model_to' => 'Model\\Auth_Group',
+			'key_to' => 'id',
+			'table_through' => null,
+			'key_through_from' => 'perms_id',
+			'key_through_to' => 'group_id',
+		),
+		'roles' => array(
+			'key_from' => 'id',
+			'model_to' => 'Model\\Auth_Role',
+			'key_to' => 'id',
+			'table_through' => null,
+			'key_through_from' => 'perms_id',
+			'key_through_to' => 'role_id',
+		),
+	);
 
     /**
      * init the class

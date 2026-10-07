@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -73,14 +73,22 @@ class Auth_Acl_Ormacl extends \Auth_Acl_Driver
         // get the permission area and the permission rights to be checked
         $area = $condition[0];
 
-        // any actions defined?
-        if (! is_array($condition[1]) and preg_match('#(.*)?\[(.*)?\]#', (string) $condition[1], $matches)) {
-            $rights = (array) $matches[1];
-            $actions = explode(',', $matches[2]);
-        } else {
-            $rights  = (array) $condition[1];
-            $actions = [];
-        }
+		// any actions defined?
+		if ( ! is_array($condition[1]) and preg_match('#(.*)?\[(.*)?\]#', $condition[1], $matches))
+		{
+			$rights = (array) $matches[1];
+			$actions = explode(',', $matches[2]);
+		}
+		elseif ($condition[1])
+		{
+			$rights  = (array) $condition[1];
+			$actions = array();
+		}
+		else
+		{
+			$rights  = array();
+			$actions = array();
+		}
 
         // fetch the current user object
         $user = Auth::get_user();

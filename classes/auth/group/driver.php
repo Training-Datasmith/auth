@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -76,25 +76,75 @@ abstract class Auth_Group_Driver extends \Auth_Driver
             return \Auth::acl($driver)->has_access($condition, $group);
         }
 
-        // When no group was given check all logged in users
-        foreach (\Auth::verified() as $v) {
-            // ... and check all those their groups
-            $gs = $v->get_groups();
-            foreach ($gs as $g_id) {
-                // ... and try to validate if its group is this one
-                if ($this->id === $g_id[0]) {
-                    if ($this->has_access($condition, $driver, $g_id)) {
-                        return true;
-                    }
-                }
-            }
-        }
+		// When no group was given check all logged in users
+		foreach (\Auth::verified() as $v)
+		{
+			// ... and check all those their groups
+			$gs = $v->get_groups();
+			foreach ($gs as $g_id)
+			{
+				// ... and try to validate if its group is this one
+				if ($this->get_id() == $g_id[0])
+				{
+					if ($this->has_access($condition, $driver, $g_id))
+					{
+						return true;
+					}
+				}
+			}
+		}
 
         // when nothing validated yet: it has failed to
         return false;
     }
 
-    // ------------------------------------------------------------------------
+	/**
+	 * Check access rights, must match any of the given conditions
+	 *
+	 * @param	array	array of conditions as passed to has_access()
+	 * @param	string	acl driver id or null to check all
+	 * @param	array	user identifier to check in form array(driver_id, user_id)
+	 * @return	bool
+	 */
+	public function has_any_access($conditions, $driver, $group = null)
+	{
+		foreach ($conditions as $condition)
+		{
+			// return true on the first hit
+			if ($this->has_access($condition, $driver, $group))
+			{
+				return true;
+			}
+		}
+
+		// none were a hit
+		return false;
+	}
+
+	/**
+	 * Check access rights, must match all of the given conditions
+	 *
+	 * @param	array	array of conditions as passed to has_access()
+	 * @param	string	acl driver id or null to check all
+	 * @param	array	user identifier to check in form array(driver_id, user_id)
+	 * @return	bool
+	 */
+	public function has_all_access($conditions, $driver, $group = null)
+	{
+		foreach ($conditions as $condition)
+		{
+			// return false on the first miss
+			if ( ! $this->has_access($condition, $driver, $group))
+			{
+				return false;
+			}
+		}
+
+		// none were a miss
+		return true;
+	}
+
+	// ------------------------------------------------------------------------
 
     /**
      * Check membership of given users

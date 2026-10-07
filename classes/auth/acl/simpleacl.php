@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -18,10 +18,10 @@ class Auth_Acl_Simpleacl extends \Auth_Acl_Driver
 {
     protected static $_valid_roles = [];
 
-    public static function _init(): void
-    {
-        static::$_valid_roles = array_keys(\Config::get('simpleauth.roles'));
-    }
+	public static function _init()
+	{
+		static::$_valid_roles = array_keys(\Config::get('simpleauth.roles', array()));
+	}
 
     public function roles()
     {
@@ -38,23 +38,22 @@ class Auth_Acl_Simpleacl extends \Auth_Acl_Driver
             return false;
         }
 
-        $area    = $condition[0];
-        $rights  = (array) $condition[1];
-        $current_roles  = $group->get_roles($entity[1]);
-        $current_rights = [];
-        if (is_array($current_roles)) {
-            $roles = \Config::get('simpleauth.roles', []);
-            array_key_exists('#', $roles) && array_unshift($current_roles, '#');
-            foreach ($current_roles as $r_role) {
-                // continue if the role wasn't found
-                if (! array_key_exists($r_role, $roles)) {
-                    continue;
-                }
-                $r_rights = $roles[$r_role];
-                // if one of the roles has a negative or positive wildcard return it without question
-                if (is_bool($r_rights)) {
-                    return $r_rights;
-                }
+		$area    = $condition[0];
+		$rights  = empty($condition[1]) ? array() : (array) $condition[1];
+		$current_roles  = $group->get_roles($entity[1]);
+		$current_rights = array();
+		if (is_array($current_roles))
+		{
+			$roles = \Config::get('simpleauth.roles', array());
+			array_key_exists('#', $roles) && array_unshift($current_roles, '#');
+			foreach ($current_roles as $r_role)
+			{
+				// continue if the role wasn't found
+				if ( ! array_key_exists($r_role, $roles))
+				{
+					continue;
+				}
+				$r_rights = $roles[$r_role];
 
                 // if one of the roles has a negative or positive wildcard return it without question
                 if (array_key_exists($area, $r_rights)) {

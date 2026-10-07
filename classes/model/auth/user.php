@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -33,74 +33,69 @@ class Auth_User extends \Orm\Model
      */
     protected static $_table_name;
 
-    /**
-     * @var array	model properties
-     */
-    protected static $_properties = [
-        'id'              => [],
-        'username'        => [
-            'label'       => 'auth_model_user.name',
-            'default'     => 0,
-            'null'        => false,
-            'validation'  => ['required', 'max_length' => [255]],
-        ],
-        'email'           => [
-            'label'       => 'auth_model_user.email',
-            'default'     => 0,
-            'null'        => false,
-            'validation'  => ['required', 'valid_email'],
-        ],
-        'group'	          => [
-            'label'       => 'auth_model_user.group_id',
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => 'select'],
-            'validation'  => ['required', 'match_pattern' => ['/^[1-9]\d*$/']],
-        ],
-        'group_id'        => [
-            'label'       => 'auth_model_user.group_id',
-            'default'     => null,
-            'null'        => true,
-            'form'        => ['type' => 'select'],
-            'validation'  => ['match_pattern' => ['/^[1-9]\d*$/']],
-        ],
-        'password'        => [
-            'label'       => 'auth_model_user.password',
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => 'password'],
-            'validation'  => ['min_length' => [8], 'match_field' => ['confirm']],
-        ],
-        'profile_fields'  => [
-            'default'     => [],
-            'data_type'   => 'serialize',
-            'form'        => ['type' => false],
-        ],
-        'last_login'      => [
-            'form'        => ['type' => false],
-        ],
-        'previous_login'  => [
-            'form'        => ['type' => false],
-        ],
-        'login_hash'      => [
-            'form'        => ['type' => false],
-        ],
-        'user_id'         => [
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => false],
-        ],
-        'created_at'      => [
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => false],
-        ],
-        'updated_at'      => [
-            'default'     => 0,
-            'null'        => false,
-            'form'        => ['type' => false],
-        ],
-    ];
+	/**
+	 * @var array	model properties
+	 */
+	protected static $_properties = array(
+		'id'              => array(),
+		'username'        => array(
+			'label'       => 'auth_model_user.name',
+			'null'        => false,
+			'validation'  => array('required', 'max_length' => array(255)),
+		),
+		'email'           => array(
+			'label'       => 'auth_model_user.email',
+			'null'        => false,
+			'validation'  => array('required', 'valid_email'),
+		),
+		'group_id'        => array(
+			'label'       => 'auth_model_user.group_id',
+			'default'     => null,
+			'null'        => true,
+			'form'        => array('type' => 'select'),
+			'validation'  => array('match_pattern' => array('/^[1-9]\d*$/')),
+		),
+		'password'        => array(
+			'label'       => 'auth_model_user.password',
+			'null'        => false,
+			'form'        => array('type' => 'password'),
+			'validation'  => array('min_length' => array(8), 'match_field' => array('confirm')),
+		),
+		'salt'            => array(
+			'default'     => '',
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+		'profile_fields'  => array(
+			'default'     => array(),
+			'data_type'   => 'serialize',
+			'form'        => array('type' => false),
+		),
+		'last_login'      => array(
+			'form'        => array('type' => false),
+		),
+		'previous_login'  => array(
+			'form'        => array('type' => false),
+		),
+		'login_hash'      => array(
+			'form'        => array('type' => false),
+		),
+		'user_id'         => array(
+			'default'     => 0,
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+		'created_at'      => array(
+			'default'     => 0,
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+		'updated_at'      => array(
+			'default'     => 0,
+			'null'        => false,
+			'form'        => array('type' => false),
+		),
+	);
 
     /**
      * @var array	defined observers
@@ -133,41 +128,40 @@ class Auth_User extends \Orm\Model
         ],
     ];
 
-    /**
-     * @var array	belongs_to relationships
-     */
-    protected static $_belongs_to = [
-        'group' => [
-            'model_to' => 'Model\\Auth_Group',
-            'key_from' => 'group_id',
-            'key_to'   => 'id',
-            'cascade_delete' => false,
-        ],
-    ];
+	/**
+	 * @var array	belongs_to relationships
+	 */
+	protected static $_belongs_to = array(
+		'group' => array(
+			'model_to' => 'Model\\Auth_Group',
+			'key_from' => 'group_id',
+			'key_to'   => 'id',
+		),
+	);
 
-    /**
-     * @var array	has_many relationships
-     */
-    protected static $_has_many = [
-        'metadata' => [
-            'model_to' => 'Model\\Auth_Metadata',
-            'key_from' => 'id',
-            'key_to'   => 'parent_id',
-            'cascade_delete' => true,
-        ],
-        'userpermission' => [
-            'model_to' => 'Model\\Auth_Userpermission',
-            'key_from' => 'id',
-            'key_to'   => 'user_id',
-            'cascade_delete' => false,
-        ],
-        'providers' => [
-            'model_to' => 'Model\\Auth_Provider',
-            'key_from' => 'id',
-            'key_to'   => 'parent_id',
-            'cascade_delete' => true,
-        ],
-    ];
+	/**
+	 * @var array	has_many relationships
+	 */
+	protected static $_has_many = array(
+		'metadata' => array(
+			'model_to' => 'Model\\Auth_Metadata',
+			'key_from' => 'id',
+			'key_to'   => 'parent_id',
+			'constraint' => \Orm\Relation::CONSTRAINT_CASCADE,
+		),
+		'userpermission' => array(
+			'model_to' => 'Model\\Auth_Userpermission',
+			'key_from' => 'id',
+			'key_to'   => 'user_id',
+			'constraint' => \Orm\Relation::CONSTRAINT_CASCADE,
+		),
+		'providers' => array(
+			'model_to' => 'Model\\Auth_Provider',
+			'key_from' => 'id',
+			'key_to'   => 'parent_id',
+			'constraint' => \Orm\Relation::CONSTRAINT_CASCADE,
+		),
+	);
 
     /**
      * @var array	many_many relationships

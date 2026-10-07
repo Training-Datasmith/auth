@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -83,14 +83,60 @@ abstract class Auth_Acl_Driver extends \Auth_Driver
 
     // ------------------------------------------------------------------------
 
-    /**
-     * Check access rights
-     *
-     * @param	mixed	condition to check for access
-     * @param	mixed	user or group identifier in the form of array(driver_id, id)
-     * @return	bool
-     */
-    abstract public function has_access($condition, array $entity);
+	/**
+	 * Check access rights, must match any of the given conditions
+	 *
+	 * @param	array	array of conditions as passed to has_access()
+	 * @param	mixed	user or group identifier in the form of array(driver_id, id)
+	 * @return	bool
+	 */
+	public function has_any_access($conditions, Array $entity)
+	{
+		foreach ($conditions as $condition)
+		{
+			// return true on the first hit
+			if ($this->has_access($condition, $entity))
+			{
+				return true;
+			}
+		}
+
+		// none were a hit
+		return false;
+	}
+
+	/**
+	 * Check access rights, must match all of the given conditions
+	 *
+	 * @param	array	array of conditions as passed to has_access()
+	 * @param	mixed	user or group identifier in the form of array(driver_id, id)
+	 * @return	bool
+	 */
+	public function has_all_access($conditions, Array $entity)
+	{
+		foreach ($conditions as $condition)
+		{
+			// return false on the first miss
+			if ( ! $this->has_access($condition, $entity))
+			{
+				return false;
+			}
+		}
+
+		// none were a miss
+		return true;
+	}
+
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Check access rights
+	 *
+	 * @param	mixed	condition to check for access
+	 * @param	mixed	user or group identifier in the form of array(driver_id, id)
+	 * @return	bool
+	 */
+	abstract public function has_access($condition, Array $entity);
 }
 
 /* end of file driver.php */

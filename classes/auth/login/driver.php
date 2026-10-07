@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -154,16 +154,62 @@ abstract class Auth_Login_Driver extends \Auth_Driver
         return \Auth::acl($driver)->has_access($condition, $entity);
     }
 
-    /**
-     * Default password hash method
-     *
-     * @param   string
-     * @return  string
-     */
-    public function hash_password($password)
-    {
-        return base64_encode(hash_pbkdf2('sha256', (string) $password, \Config::get('auth.salt'), \Config::get('auth.iterations', 10000), 32, true));
-    }
+	/**
+	 * Check access rights, must match any of the given conditions
+	 *
+	 * @param	array	array of conditions as passed to has_access()
+	 * @param   string  acl driver id or null to check all
+	 * @param   array   user identifier to check in form array(driver_id, user_id)
+	 * @return  bool
+	 */
+	public function has_any_access($conditions, $driver = null, $entity = null)
+	{
+		foreach ($conditions as $condition)
+		{
+			// return true on the first hit
+			if ($this->has_access($condition, $driver, $entity))
+			{
+				return true;
+			}
+		}
+
+		// none were a hit
+		return false;
+	}
+
+	/**
+	 * Check access rights, must match all of the given conditions
+	 *
+	 * @param	array	array of conditions as passed to has_access()
+	 * @param   string  acl driver id or null to check all
+	 * @param   array   user identifier to check in form array(driver_id, user_id)
+	 * @return  bool
+	 */
+	public function has_all_access($conditions, $driver = null, $entity = null)
+	{
+		foreach ($conditions as $condition)
+		{
+			// return false on the first miss
+			if ( ! $this->has_access($condition, $driver, $entity))
+			{
+				return false;
+			}
+		}
+
+		// none were a miss
+		return true;
+	}
+
+	/**
+	 * Default password hash method
+	 *
+	 * @param   string
+	 * @return  string
+	 */
+	public function hash_password($password)
+	{
+		return base64_encode(hash_pbkdf2('sha256', $password, \Config::get('auth.salt'), \Config::get('auth.iterations', 10000), 32, true));
+	}
 
     /**
      * Returns the list of defined groups

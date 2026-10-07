@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -38,12 +38,12 @@ return [
      */
     'table_name' => 'users',
 
-    /**
-     * Array, choose which columns from the users table are selected.
-     *  must include: username, password, email, last_login,
-     * login_hash, group & profile_fields
-     */
-    'table_columns' => null,
+	/**
+	 * Array, choose which columns from the users table are selected.
+	 *  must include: id. username, password, salt, email, last_login,
+	 * login_hash, group & profile_fields
+	 */
+	'table_columns' => null,
 
     /**
      * This will allow you to use the group & acl driver for non-logged in users

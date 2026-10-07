@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -82,22 +82,23 @@ class Auth_Group extends \Orm\Model
         ],
     ];
 
-    /**
-     * @var array	has_many relationships
-     */
-    protected static $_has_many = [
-        'users' => [
-            'model_to' => 'Model\\Auth_User',
-            'key_from' => 'id',
-            'key_to'   => 'group_id',
-        ],
-        'grouppermission' => [
-            'model_to' => 'Model\\Auth_Grouppermission',
-            'key_from' => 'id',
-            'key_to'   => 'group_id',
-            'cascade_delete' => false,
-        ],
-    ];
+	/**
+	 * @var array	has_many relationships
+	 */
+	protected static $_has_many = array(
+		'users' => array(
+			'model_to' => 'Model\\Auth_User',
+			'key_from' => 'id',
+			'key_to'   => 'group_id',
+			'constraint' => \Orm\Relation::CONSTRAINT_RESTRICT,
+		),
+		'grouppermission' => array(
+			'model_to' => 'Model\\Auth_Grouppermission',
+			'key_from' => 'id',
+			'key_to'   => 'group_id',
+			'constraint' => \Orm\Relation::CONSTRAINT_CASCADE,
+		),
+	);
 
     /**
      * @var array	many_many relationships

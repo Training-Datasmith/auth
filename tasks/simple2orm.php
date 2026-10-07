@@ -8,7 +8,7 @@ declare(strict_types=1);
  * @version    1.8.2
  * @author     Fuel Development Team
  * @license    MIT License
- * @copyright  2010 - 2019 Fuel Development Team
+ * @copyright  2010-2026 Fuel Development Team
  * @link       https://fuelphp.com
  */
 
@@ -180,14 +180,20 @@ HELP;
             'updated_at' => ['type' => 'int', 'constraint' => 11, 'default' => 0, 'after' => 'created_at'],
             ];
 
-        foreach ($usertable as $field => $value) {
-            if (\DBUtil::field_exists(static::$data['ormauth_table'], $field)) {
-                unset($usertable[$field]);
-            }
-        }
-        if (! empty($usertable)) {
-            $errors[] = 'User table "'.static::$data['ormauth_table'].'" is missing the field(s): '.implode(', ', array_keys($usertable));
-        }
+		if (isset(static::$data['ormauth_table']))
+		{
+			foreach ($usertable as $field => $value)
+			{
+				if (\DBUtil::field_exists(static::$data['ormauth_table'], $field))
+				{
+					unset($usertable[$field]);
+				}
+			}
+			if ( ! empty($usertable))
+			{
+				$errors[] = 'User table "'.static::$data['ormauth_table'].'" is missing the field(s): '.implode(', ', array_keys($usertable));
+			}
+		}
 
         // process the results of the validation
         if ($errors) {
