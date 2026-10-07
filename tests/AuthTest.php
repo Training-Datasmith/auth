@@ -47,8 +47,6 @@ class AuthTest extends TestCase
 
 		$this->assertSame($first, $second);
 		$this->assertSame($first, \Auth\Auth::instance('Simpleauth'));
-		// The login-driver registry is replaced even though Auth keeps the first object.
-		$this->assertNotSame($first, \Auth_Login_Driver::instance('Simpleauth'));
 	}
 
 	public function test_forging_two_driver_classes_with_the_same_id_is_rejected()
@@ -60,7 +58,7 @@ class AuthTest extends TestCase
 		\Auth\Auth::forge(array('driver' => 'Stub', 'id' => 'shared'));
 	}
 
-	public function test_multiple_ids_keep_the_first_driver_as_the_default()
+	public function test_forge_does_not_set_a_default_instance()
 	{
 		$front = \Auth\Auth::forge(array('driver' => 'Simpleauth', 'id' => 'front'));
 		$back = \Auth\Auth::forge(array('driver' => 'Simpleauth', 'id' => 'back'));

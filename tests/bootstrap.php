@@ -7,12 +7,7 @@ if ( ! defined('DS'))
 
 if ( ! defined('APPPATH'))
 {
-	define('APPPATH', sys_get_temp_dir().DS.'fuel-auth-tests-'.getmypid().DS);
-}
-
-if ( ! is_dir(APPPATH))
-{
-	mkdir(APPPATH, 0777, true);
+	define('APPPATH', __DIR__.DS.'fixtures'.DS.'app'.DS);
 }
 
 require __DIR__.'/FuelStub.php';

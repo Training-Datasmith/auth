@@ -187,7 +187,7 @@ HELP;
 
 		// check if all migrations have run, and the migration system is consistent
 		$migrations = \Config::load('migrations', true);
-		if ( ! is_array($migrations) || ! isset($migrations['version']['package']['auth'][6]))
+		if ( ! isset($migrations['version']['package']['auth'][6]))
 		{
 			$errors[] = 'Auth database migrations haven\'t run (succesfully).';
 		}

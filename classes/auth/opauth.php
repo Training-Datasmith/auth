@@ -321,7 +321,7 @@ class Auth_Opauth
 		// do some validation
 		if ( ! is_numeric($data['expires']))
 		{
-			if ($date = \DateTime::createFromFormat('Y-m-d\TH:i:sO', $data['expires']))
+			if ($date = \DateTime::createFromFormat(\DateTime::ISO8601, $data['expires']))
 			{
 				$data['expires'] = $date->getTimestamp();
 			}

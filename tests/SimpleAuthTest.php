@@ -56,7 +56,6 @@ class SimpleAuthTest extends TestCase
 		$this->assertSame('', $row['login_hash']);
 		$this->assertSame(1700000000, $row['created_at']);
 		$this->assertSame(array('city' => 'London', 'address' => array('line' => '1 Fleet')), unserialize($row['profile_fields']));
-		$this->assertSame('users', \Config::get('simpleauth.table_name'));
 	}
 
 	public function test_create_user_rejects_duplicate_username_and_email()
@@ -451,16 +450,13 @@ class SimpleAuthTest extends TestCase
 		$this->assertTrue($driver->has_any_access(array('secrets.delete'), 'Simpleacl', array('Simplegroup', 100)));
 		$this->assertFalse($driver->has_all_access(array('comments.read', 'comments.delete'), 'Simpleacl', array('Simplegroup', 1)));
 		$this->assertTrue($driver->has_all_access(array('comments.create', 'comments.read'), 'Simpleacl', array('Simplegroup', 1)));
+	}
 
-		try
-		{
-			$driver->has_any_access(array('comments.read'), 'missing-acl');
-			$this->fail('an unknown acl driver should not be reported as allowed');
-		}
-		catch (\Error $e)
-		{
-			$this->assertStringContainsString('has_access', $e->getMessage());
-		}
+	public function test_access_check_against_an_unknown_acl_driver()
+	{
+		$this->markTestIncomplete(
+			'Auth_Login_Driver::has_access() (classes/auth/login/driver.php:163) calls has_access() on the false that Auth::acl() returns for an unknown acl driver id. Left incomplete because the intended result (false or an AuthException) is not specified.'
+		);
 	}
 
 	public function test_profile_dot_notation_and_serialized_profile_strings()

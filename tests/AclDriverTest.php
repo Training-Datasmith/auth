@@ -11,7 +11,6 @@ class AclDriverTest extends TestCase
 			'bracket list trims spaces' => array('comments.[ update , delete ]', array('comments', array('update', 'delete'))),
 			'tight bracket list' => array('comments.[read]', array('comments', array('read'))),
 			'array conditions pass through' => array(array('posts', array('create')), array('posts', array('create'))),
-			'extra dotted segments are ignored' => array('a.b.c', array('a', 'b')),
 			'unclosed bracket stays a string' => array('comments.[read', array('comments', '[read')),
 		);
 	}
@@ -22,6 +21,13 @@ class AclDriverTest extends TestCase
 	public function test_parse_conditions($input, $expected)
 	{
 		$this->assertSame($expected, \Auth\Auth_Acl_Driver::_parse_conditions($input));
+	}
+
+	public function test_conditions_with_more_than_two_segments_are_not_truncated()
+	{
+		$this->markTestIncomplete(
+			'Auth_Acl_Driver::_parse_conditions() (classes/auth/acl/driver.php:79) keeps only the first two segments, so "admin.users.delete" is checked as "admin.users" and can over-grant. Rejecting or supporting deeper conditions is a behavior change, so it is left incomplete.'
+		);
 	}
 
 	public function test_parse_conditions_rejects_non_strings()

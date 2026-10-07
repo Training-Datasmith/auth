@@ -42,19 +42,12 @@ class DbResult implements \Countable, \IteratorAggregate, \ArrayAccess
 
 	public function offsetSet(mixed $offset, mixed $value): void
 	{
-		if ($offset === null)
-		{
-			$this->rows[] = $value;
-
-			return;
-		}
-
-		$this->rows[$offset] = $value;
+		throw new \FuelException('Database results are read-only');
 	}
 
 	public function offsetUnset(mixed $offset): void
 	{
-		unset($this->rows[$offset]);
+		throw new \FuelException('Database results are read-only');
 	}
 
 	protected function rowAt($offset)

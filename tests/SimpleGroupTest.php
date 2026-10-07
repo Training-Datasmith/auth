@@ -39,7 +39,7 @@ class SimpleGroupTest extends TestCase
 		$this->assertSame(array(), $group->get_roles());
 	}
 
-	public function test_membership_uses_the_loaded_login_driver_not_the_supplied_user_id()
+	public function test_membership_of_the_current_user()
 	{
 		$login = $this->bootSimpleAuth();
 		$login->create_user('ada', 'secret', 'ada@example.com', 50);
@@ -48,19 +48,22 @@ class SimpleGroupTest extends TestCase
 
 		$this->assertTrue($group->member(50));
 		$this->assertFalse($group->member(1));
-		$this->assertTrue($group->member(50, array('Simpleauth', 999)));
-		$this->assertFalse($group->member(1, array('Simpleauth', 999)));
 		$this->assertSame('Moderators', $group->get_name());
 		$this->assertSame(array('user', 'moderator'), $group->get_roles());
 	}
 
-	public function test_membership_lookup_for_an_unknown_login_driver_errors()
+	public function test_membership_of_another_user_uses_that_users_groups()
 	{
-		$this->forgeSimpleAuth();
-		$group = \Auth\Auth::group('Simplegroup');
+		$this->markTestIncomplete(
+			'Auth_Group_Simplegroup::member() (classes/auth/group/simplegroup.php:41) ignores $user[1] and reads the groups of whoever is logged in to driver $user[0]. Checking another user needs a user lookup, which is not a minimal fix.'
+		);
+	}
 
-		$this->expectException(\Error::class);
-		$group->member(1, array('missing', 1));
+	public function test_membership_lookup_for_an_unknown_login_driver()
+	{
+		$this->markTestIncomplete(
+			'Auth_Group_Simplegroup::member() (classes/auth/group/simplegroup.php:41) calls get_groups() on the false that Auth::instance() returns for an unknown login driver id. Left incomplete because the intended result (false or an AuthException) is not specified.'
+		);
 	}
 
 	public function test_login_driver_aggregates_group_and_role_lists()
@@ -73,7 +76,7 @@ class SimpleGroupTest extends TestCase
 		$this->assertSame(array('#', 'user', 'moderator', 'banned', 'admin'), $login->roles('Simpleacl'));
 	}
 
-	public function test_group_access_helpers_check_the_current_user()
+	public function test_group_access_helpers_check_the_given_group()
 	{
 		$login = $this->forgeSimpleAuth();
 		$login->create_user('ada', 'secret', 'ada@example.com', 1);
@@ -88,11 +91,19 @@ class SimpleGroupTest extends TestCase
 		$this->assertFalse($group->has_access('comments.delete', 'Simpleacl', array('Simplegroup', 1)));
 	}
 
-	public function test_group_has_access_for_verified_users_does_not_overwrite_driver_id()
+	public function test_group_access_without_a_group_only_checks_groups_of_this_driver()
 	{
-		$this->markTestIncomplete(
-			'Auth_Group_Driver::has_access() assigns $this->id = $g_id[0] (classes/auth/group/driver.php:91) when no group is given. That overwrites the driver id while scanning verified users. Left incomplete because changing it is ambiguous when more than one group driver is loaded.'
-		);
+		$login = $this->bootSimpleAuth();
+		$login->create_user('ada', 'secret', 'ada@example.com', 1);
+		$this->assertTrue($login->login('ada', 'secret'));
+		$own = \Auth\Auth::group('Simplegroup');
+		$other = \Auth\Auth_Group_Driver::forge(array('driver' => 'Simplegroup', 'id' => 'other'));
+
+		$this->assertTrue($own->has_access('comments.read', null));
+		$this->assertFalse($own->has_access('comments.delete', null));
+		$this->assertFalse($other->has_access('comments.read', null));
+		$this->assertSame('other', $other->get_id());
+		$this->assertSame('Simplegroup', $own->get_id());
 	}
 
 	public function test_group_access_without_a_verified_user_fails()

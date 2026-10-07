@@ -311,7 +311,6 @@ PHP);
 		$this->assertTrue($driver->login('ada', 'secret'));
 		$opauth = $this->forgeOpauth(array(
 			'provider' => 'Facebook',
-			'link_multiple_providers' => true,
 		), false);
 		$this->callbackPayload($this->authPayload());
 
@@ -351,7 +350,7 @@ PHP);
 			'expires' => '2020-01-02T03:04:05+0000',
 		));
 		$this->assertCount(1, \DB::$tables['users_providers']);
-		$this->assertSame(\DateTime::createFromFormat('Y-m-d\TH:i:sO', '2020-01-02T03:04:05+0000')->getTimestamp(), \DB::$tables['users_providers'][0]['expires']);
+		$this->assertSame(1577934245, \DB::$tables['users_providers'][0]['expires']);
 
 		$before = time();
 		$opauth->link_provider(array(
@@ -398,7 +397,7 @@ PHP);
 	public function test_create_user_builds_a_fullname_from_first_and_last_name()
 	{
 		$this->bootSimpleAuth();
-		$opauth = $this->forgeOpauth(array('provider' => 'Facebook', 'default_group' => 1), false);
+		$opauth = $this->forgeOpauth(array('provider' => 'Facebook'), false);
 		$method = new ReflectionMethod($opauth, 'create_user');
 		$method->setAccessible(true);
 		$id = $method->invoke($opauth, array(

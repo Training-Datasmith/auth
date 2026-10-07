@@ -12,6 +12,9 @@
          failOnRisky="true"
          failOnWarning="true"
          executionOrder="default">
+    <php>
+        <ini name="error_reporting" value="-1"/>
+    </php>
     <testsuites>
         <testsuite name="auth">
             <directory>tests</directory>

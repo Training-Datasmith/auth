@@ -557,14 +557,21 @@ class DbQuery
 
 	public function where($field, $op, $value)
 	{
-		$this->currentGroup()->parts[] = array('AND', array($field, $op, $value));
-
-		return $this;
+		return $this->addCondition('AND', $field, $op, $value);
 	}
 
 	public function or_where($field, $op, $value)
 	{
-		$this->currentGroup()->parts[] = array('OR', array($field, $op, $value));
+		return $this->addCondition('OR', $field, $op, $value);
+	}
+
+	protected function addCondition($glue, $field, $op, $value)
+	{
+		if ( ! in_array($op, array('=', '!=', '<>'), true))
+		{
+			throw new \LogicException('The DB stand-in does not support the "'.$op.'" operator');
+		}
+		$this->currentGroup()->parts[] = array($glue, array($field, $op, $value));
 
 		return $this;
 	}
@@ -600,16 +607,22 @@ class DbQuery
 
 	protected function closeGroup()
 	{
-		if (count($this->stack) > 1)
+		if (count($this->stack) === 1)
 		{
-			array_pop($this->stack);
+			throw new \LogicException('where_close() without a matching where_open()');
 		}
+		array_pop($this->stack);
 
 		return $this;
 	}
 
 	public function execute($connection = null)
 	{
+		if (count($this->stack) !== 1)
+		{
+			throw new \LogicException('where_open() without a matching where_close()');
+		}
+
 		DB::$last_connection = $connection;
 		$table = $this->table;
 		if ( ! isset(DB::$tables[$table]))
@@ -734,27 +747,30 @@ class DbQuery
 			return true;
 		}
 
-		$ok = null;
+		// SQL precedence: AND binds tighter than OR, so each OR starts a new AND term.
+		$any = false;
+		$term = null;
 		foreach ($group->parts as $part)
 		{
 			list($glue, $node) = $part;
 			$value = $node instanceof DbGroup ? $this->groupMatches($node, $row) : $this->compare($row, $node);
 
-			if ($ok === null)
+			if ($term === null)
 			{
-				$ok = $value;
+				$term = $value;
 			}
 			elseif ($glue === 'OR')
 			{
-				$ok = $ok || $value;
+				$any = $any || $term;
+				$term = $value;
 			}
 			else
 			{
-				$ok = $ok && $value;
+				$term = $term && $value;
 			}
 		}
 
-		return (bool) $ok;
+		return $any || $term;
 	}
 
 	protected function compare(array $row, array $condition)
@@ -775,15 +791,4 @@ function call_fuel_func_array($callback, array $args)
 	return call_user_func_array($callback, $args);
 }
 
-if (PHP_VERSION_ID >= 80100)
-{
-	require __DIR__.'/DbResult81.php';
-}
-elseif (PHP_VERSION_ID >= 80000)
-{
-	require __DIR__.'/DbResult80.php';
-}
-else
-{
-	require __DIR__.'/DbResult74.php';
-}
+require __DIR__.(PHP_VERSION_ID >= 80100 ? '/DbResult81.php' : '/DbResult74.php');
